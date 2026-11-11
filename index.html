@@ -40,6 +40,10 @@ button, input, select, textarea { font: inherit; color: inherit }
 .top p { color: var(--ink); font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
 .count { display: block; width: fit-content; max-width: 100%; line-height: 1.6; background: var(--leaf); color: var(--navy); border-radius: 14px; padding: 6px 14px; font-family: var(--soft); font-size: 14.5px }
 .count b { font-family: var(--serif); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; padding: 0 2px }
+.tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 22px; border-radius: 99px; white-space: nowrap }
+.tabs a:hover { color: var(--navy) }
+.tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
 .lead { font-family: var(--soft); font-size: 14.5px; line-height: 1.8; color: var(--muted); max-width: 64ch; text-wrap: pretty }
 
 .step { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0 }
@@ -197,6 +201,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
 </style>
 
 <div class="wrap">
+  <nav class="tabs" id="tabs" aria-label="메뉴" hidden><a href="/" aria-current="page">글쓰기</a><a href="stats">통계</a></nav>
   <div class="top">
     <p class="count" id="count" hidden>지금까지 <b id="count-n">0</b>개의 글이 Writing Clinic을 받았어요</p>
     <h1>Writing Clinic<small>천천히, 한 단락씩 쓰는 영어 글쓰기 연습장</small></h1>
@@ -292,7 +297,6 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
 
   <footer class="foot">
     <p>오늘 쓴 한 단락이 다음 글의 첫 문장이 됩니다.</p>
-    <a href="stats" id="stats-link" hidden>우리의 글쓰기 통계 <span aria-hidden="true">→</span></a>
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
@@ -802,7 +806,7 @@ async function loadCount() {
 }
 async function apiReady() {
   if (location.protocol !== 'https:' && location.protocol !== 'http:') return null;
-  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('stats-link').hidden = false; loadCount(); } return d && d.ready ? 'api' : null; } catch (e) { return null; }
+  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('tabs').hidden = false; loadCount(); } return d && d.ready ? 'api' : null; } catch (e) { return null; }
 }
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 

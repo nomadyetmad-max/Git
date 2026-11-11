@@ -31,7 +31,13 @@ h1, h2, h3, p { margin: 0 }
 button, input { font: inherit; color: inherit }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
 .wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px }
+.tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 22px; border-radius: 99px; white-space: nowrap }
+.tabs a:hover { color: var(--navy) }
+.tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
 .top { display: flex; flex-direction: column; gap: 8px }
+.hero { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px; box-shadow: 0 2px 14px var(--shadow); font-family: var(--soft); font-size: 18px; line-height: 1.5 }
+.hero b { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 52px; color: var(--navy); font-variant-numeric: tabular-nums; padding: 0 4px; vertical-align: -4px }
 .top a.back { color: var(--navy); font-size: 14px; text-decoration: none; width: fit-content }
 .top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 38px; line-height: 1.15; color: var(--navy) }
 .top p { font-family: var(--soft); font-size: 15.5px; line-height: 1.8; max-width: 62ch }
@@ -111,21 +117,16 @@ tr:last-child td { border-bottom: 0 }
 </head>
 <body>
 <div class="wrap">
+  <nav class="tabs" aria-label="메뉴"><a href="/">글쓰기</a><a href="/stats" aria-current="page">통계</a></nav>
   <header class="top">
-    <a class="back" href="/">← Writing Clinic으로 돌아가기</a>
     <h1>우리의 글쓰기 통계</h1>
     <p>Writing Clinic에서 받은 첨삭을 모아 만든 통계예요. 친구들이 어떤 주제로 쓰고, 어디에서 많이 틀리는지 볼 수 있어요. 이름과 글 내용은 보이지 않아요.</p>
-    <span class="meta" id="updated">통계를 불러오는 중…</span>
+    <span class="meta" id="updated" role="status">통계를 불러오는 중…</span>
   </header>
 
-  <section class="tiles" aria-label="첨삭 수">
-    <div class="tile"><b id="t-total">–</b><span>지금까지 첨삭</span></div>
-    <div class="tile"><b id="t-week">–</b><span>최근 7일</span></div>
-    <div class="tile"><b id="t-today">–</b><span>오늘</span></div>
-  </section>
+  <p class="hero">지금까지 <b id="t-total">–</b>개의 글이 첨삭되었어요</p>
 
   <div class="grid" id="charts">
-    <section class="card wide"><h2>최근 14일 첨삭 수</h2><div id="c-days"></div></section>
     <section class="card"><h2>많이 나온 문법 오류</h2><p class="lead">첨삭에서 지적된 횟수예요. 위에 있는 오류부터 조심해 보세요.</p><div id="c-errors"></div></section>
     <section class="card"><h2>보완이 많이 필요한 구조 항목</h2><p class="lead">‘보완 필요’ 판정을 받은 횟수예요.</p><div id="c-weak"></div></section>
     <section class="card wide"><h2>레벨별 평균 점수</h2><p class="lead">5점 만점이에요. 레벨마다 보는 기준이 달라서, 레벨끼리 점수를 비교하기보다 내 레벨의 평균과 비교해 보세요.</p><div id="c-scores"></div></section>
@@ -147,7 +148,7 @@ tr:last-child td { border-bottom: 0 }
   </section>
 
   <footer class="foot">
-    <span>통계는 첨삭 기록이 쌓일 때마다 자동으로 바뀌어요. (1분 간격)</span>
+    <span>통계는 첨삭 기록이 쌓일 때마다 자동으로 바뀌어요.</span>
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 ↗</a>
   </footer>
 </div>
@@ -171,16 +172,6 @@ function hbars(list, unit, total) {
     h('span', { class: 'track' }, h('span', { class: 'fill', style: 'width:' + (x.count / max * 100) + '%' })),
     h('span', { class: 'val', text: fmt(x.count) + unit + (total ? ' · ' + Math.round(x.count / total * 100) + '%' : '') })])));
 }
-function days(list) {
-  const max = Math.max(1, ...list.map((d) => d.count));
-  const cols = h('div', { class: 'cols', role: 'img', 'aria-label': '최근 14일 첨삭 수: ' + list.map((d) => d.date.slice(5) + ' ' + d.count + '회').join(', ') },
-    list.map((d) => h('div', { class: 'c' + (d.count ? '' : ' zero'), tabindex: '0' }, [
-      h('i', { style: 'height:' + (d.count / max * 100) + '%' }),
-      h('span', { class: 'tip', text: d.date.slice(5).replace('-', '/') + ' · ' + d.count + '회' }),
-      d.count && d.count === max ? h('span', { class: 'n', style: 'bottom:calc(' + (d.count / max * 100) + '% + 2px)', text: String(d.count) }) : null])));
-  const lab = h('div', { class: 'xlab', 'aria-hidden': 'true' }, list.map((d, i) => h('span', { text: i % 2 === (list.length - 1) % 2 ? String(Number(d.date.slice(8))) + '일' : '' })));
-  return h('div', {}, [cols, lab]);
-}
 function scores(levels) {
   const has = levels.filter((l) => l.count && l.grammar != null);
   if (!has.length) return h('p', { class: 'empty', text: '아직 기록이 없어요.' });
@@ -193,9 +184,8 @@ function scores(levels) {
   ]);
 }
 function render(s) {
-  $('updated').textContent = '최근 업데이트 ' + s.updated + ' (한국 시간)';
-  $('t-total').textContent = fmt(s.total); $('t-week').textContent = fmt(s.week); $('t-today').textContent = fmt(s.today);
-  $('c-days').replaceChildren(days(s.days));
+  $('updated').textContent = '';
+  $('t-total').textContent = fmt(s.total);
   $('c-errors').replaceChildren(hbars(s.errors, '회'));
   $('c-weak').replaceChildren(hbars(s.weak, '회'));
   $('c-scores').replaceChildren(scores(s.levels));
