@@ -5,6 +5,9 @@
 //                 DAILY_LIMIT (사이트 전체 하루 첨삭 횟수, 기본 300)
 //                 LOG_URL, LOG_SECRET (첨삭 기록을 구글 시트에 쌓는 Apps Script 웹 앱 주소와 비밀값)
 const { buildPromptFor, LEVELS, TOPICS } = require('./_lib/prompt');
+const crypto = require('crypto');
+// 첨삭 기준(프롬프트)이나 모델이 바뀌면 저장된 결과를 새로 만들도록 버전에 포함
+const RULES_VERSION = crypto.createHash('sha256').update(buildPromptFor.toString() + JSON.stringify(LEVELS)).digest('hex').slice(0, 10);
 
 const MODEL = process.env.MODEL || 'claude-sonnet-5-5';
 const HOURLY = Number(process.env.HOURLY_LIMIT || 5);
@@ -27,6 +30,22 @@ function allow(ip, device) {
   if (hits.size > 10000) hits.clear();
   return null;
 }
+// 같은 글에는 항상 같은 결과: 구글 시트의 "저장된 결과" 탭에서 찾아 그대로 돌려줌
+function resultKey(level, topic, gtype, text) {
+  const norm = text.replace(/\s+/g, ' ').trim();
+  return crypto.createHash('sha256').update([RULES_VERSION, MODEL, level, topic, gtype, norm].join('\u0001')).digest('hex').slice(0, 32);
+}
+async function findSaved(key) {
+  if (!process.env.LOG_URL) return null;
+  try {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(process.env.LOG_URL.trim(), { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, signal: ctl.signal,
+      body: JSON.stringify({ auth: (process.env.LOG_SECRET || '').trim(), action: 'get', key }) });
+    clearTimeout(timer);
+    const d = JSON.parse(await r.text());
+    return d && d.ok && d.result ? JSON.parse(d.result) : null;
+  } catch (e) { return null; }
+}
 async function saveLog(row) {
   if (!process.env.LOG_URL) return;
   try {
@@ -37,6 +56,18 @@ async function saveLog(row) {
     clearTimeout(timer);
     if (!/"ok":true/.test(body)) console.error('log not saved', r.status, body.slice(0, 200));
   } catch (e) { console.error('log failed', e && e.name); }
+}
+function logRow(parsed, { name, level, t, gtype, clean, device, key, reused }) {
+  const g = parsed.grammar || {}, st = parsed.structure || {};
+  return {
+    time: new Date(Date.now() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 19),
+    name, level: LEVELS[level].name, topic: t.en + ' (' + t.ko + ')',
+    type: (gtype || ('자동: ' + (typeof parsed.type === 'string' ? parsed.type : ''))) + (reused ? ' (같은 글, 저장된 결과)' : ''),
+    words: clean.split(/\s+/).length, grammar: g.level, structure: st.level,
+    errors: (Array.isArray(g.errors) ? g.errors : []).map((e) => (e.label || '') + (e.repeat > 1 ? ' ×' + e.repeat : '')).join(', '),
+    weak: (Array.isArray(st.criteria) ? st.criteria : []).filter((c) => c.verdict === 'weak').map((c) => c.name).join(', '),
+    text: clean, revised: typeof parsed.revised === 'string' ? parsed.revised : '', device, key
+  };
 }
 function parseJson(text) {
   const t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
@@ -69,6 +100,13 @@ module.exports = async (req, res) => {
   const blocked = allow(ipOf(req), device);
   if (blocked) return res.status(429).json({ error: blocked });
 
+  const key = resultKey(level, t.en, gtype, clean);
+  const saved = await findSaved(key);
+  if (saved) {
+    await saveLog(logRow(saved, { name, level, t, gtype, clean, device, key, reused: true }));
+    return res.status(200).json(saved);
+  }
+
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -86,18 +124,7 @@ module.exports = async (req, res) => {
     const textOut = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
     const parsed = parseJson(textOut);
     if (!parsed || typeof parsed !== 'object') return res.status(502).json({ error: 'upstream' });
-    if (parsed.valid !== false) {
-      const g = parsed.grammar || {}, st = parsed.structure || {};
-      await saveLog({
-        time: new Date(Date.now() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 19),
-        name, level: LEVELS[level].name, topic: t.en + ' (' + t.ko + ')',
-        type: gtype || ('자동: ' + (typeof parsed.type === 'string' ? parsed.type : '')),
-        words: clean.split(/\s+/).length, grammar: g.level, structure: st.level,
-        errors: (Array.isArray(g.errors) ? g.errors : []).map((e) => (e.label || '') + (e.repeat > 1 ? ' ×' + e.repeat : '')).join(', '),
-        weak: (Array.isArray(st.criteria) ? st.criteria : []).filter((c) => c.verdict === 'weak').map((c) => c.name).join(', '),
-        text: clean, revised: typeof parsed.revised === 'string' ? parsed.revised : '', device
-      });
-    }
+    if (parsed.valid !== false) await saveLog(Object.assign(logRow(parsed, { name, level, t, gtype, clean, device, key, reused: false }), { result: JSON.stringify(parsed) }));
     return res.status(200).json(parsed);
   } catch (e) {
     console.error('relay failure', e);
