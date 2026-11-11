@@ -6,4 +6,20 @@
 - Basic · Intermediate · Advanced 레벨에 따라 단어 힌트(30 · 20 · 10개)와 첨삭 기준이 달라집니다.
 - 문법과 구조 첨삭, 피드백을 반영한 글쓰기 예시를 보여 줍니다.
 
-AI 첨삭은 준비 중이며, 지금은 "제출용으로 복사"로 글을 선생님께 보낼 수 있습니다.
+## 구성
+
+- `index.html`: 사이트 전체 (GitHub Pages, Vercel 어디서든 열림)
+- `api/evaluate.js`: AI 첨삭 중계 서버 (Vercel에서만 작동). API 키는 이 서버에만 있고 학생 화면에는 노출되지 않습니다.
+- `api/_lib/prompt.js`: 첨삭 기준 (사이트와 같은 기준을 서버에서 사용, 자동 생성 파일)
+
+## Vercel 환경 변수
+
+| 이름 | 설명 | 기본값 |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API 키 (필수) | 없음 |
+| `MODEL` | 첨삭 모델 | `claude-sonnet-5-5` |
+| `HOURLY_LIMIT` | 기기당 1시간 첨삭 횟수 | `5` |
+| `IP_HOURLY_LIMIT` | 같은 인터넷 주소(학원 와이파이 등)당 1시간 첨삭 횟수 | `60` |
+| `DAILY_LIMIT` | 사이트 전체 하루 첨삭 횟수 | `300` |
+
+API 키가 없거나 GitHub Pages에서 열면 첨삭 버튼 대신 "제출용으로 복사" 안내가 나옵니다.
