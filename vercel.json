@@ -14,7 +14,7 @@
   "rewrites": [
     {
       "source": "/reading",
-      "destination": "/drill.html"
+      "destination": "/drill"
     }
   ]
 }
