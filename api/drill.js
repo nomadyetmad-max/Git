@@ -28,6 +28,7 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   const modeOf = (v) => (v === 'core' ? 'core' : 'mod');
   const act = (mode, a) => (mode === 'core' ? 'rank2_' : 'rank_') + a;
+  // v6 스크립트는 rank2_ 요청을 거절하므로(기록 안 됨) 조회만 확인
   const checkMode = (mode, d) => (mode === 'core' && d.mode !== 'core' ? { error: 'script_old' } : d);
   if (req.method === 'GET') {
     const mode = modeOf(req.query?.mode);
@@ -54,7 +55,7 @@ module.exports = async (req, res) => {
     const device = /^[a-z0-9]{8,40}$/.test(String(body.device || '')) ? body.device : 'ip-' + ip;
     const id = now.toString(36) + crypto.randomBytes(4).toString('hex');
     const time = new Date(now + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 19);
-    const d = checkMode(mode, await askSheet({ action: act(mode, 'add'), mode, id, time, grade, count, score, correct, secs, device }));
+    const d = await askSheet({ action: act(mode, 'add'), mode, id, time, grade, count, score, correct, secs, device });
     if (d.error) return res.status(503).json(d);
     cache[mode] = null;
     return res.status(200).json({ id, token: sign(id), rank: d.rank, total: d.total });
@@ -64,7 +65,7 @@ module.exports = async (req, res) => {
     if (!/^[a-z0-9]{8,30}$/.test(id) || tok.length !== 32 || !crypto.timingSafeEqual(Buffer.from(tok), Buffer.from(sign(id)))) return res.status(403).json({ error: 'bad_token' });
     const name = String(body.name || '').replace(/[^\p{L}\p{N} ._-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
     if (!name) return res.status(400).json({ error: 'bad_name' });
-    const d = checkMode(mode, await askSheet({ action: act(mode, 'name'), mode, id, grade, count, name }));
+    const d = await askSheet({ action: act(mode, 'name'), mode, id, grade, count, name });
     if (d.error) return res.status(d.error === 'not_top' || d.error === 'already' ? 409 : 503).json(d);
     cache[mode] = { boards: d.boards }; cachedAt[mode] = Date.now();
     return res.status(200).json(cache[mode]);
