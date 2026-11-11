@@ -52,7 +52,7 @@ function doPost(e) {
 // 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
 function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return out({ ok: Boolean(ss), version: 8, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
+  return out({ ok: Boolean(ss), version: 9, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
@@ -122,31 +122,45 @@ function drillRows(sh) {
   return sh.getRange(2, 1, sh.getLastRow() - 1, 10).getDisplayValues().map((r, i) => ({ row: i + 2, id: r[0], time: r[1], grade: r[2], count: r[3], score: Number(r[4]) || 0, correct: Number(r[5]) || 0, secs: Number(r[6]) || 0, name: r[8], kind: r[9] === DRILL_KIND.core ? 'core' : 'mod' }));
 }
 // 점수가 높을수록, 같으면 먼저 세운 기록이 위
-function drillSorted(rows, grade, count, kind) {
-  return rows.filter((x) => x.kind === kind && String(x.grade) === String(grade) && String(x.count) === String(count)).sort((a, b) => b.score - a.score || a.row - b.row);
+// 이번 주 기록만(since = 가장 최근 목요일 00:00, 한국 시간. 사이트 서버가 계산해서 보냄) → 매주 자동 초기화. 시트의 옛 기록은 지우지 않습니다.
+function drillSorted(rows, grade, count, kind, since) {
+  return rows.filter((x) => x.kind === kind && String(x.grade) === String(grade) && String(x.count) === String(count) && (!since || String(x.time) >= since))
+    .sort((a, b) => b.score - a.score || a.row - b.row);
+}
+// 같은 닉네임은 한 줄로: 그 닉네임의 최고 점수와, 그 점수를 달성한 횟수. 닉네임이 없는 기록은 한 줄씩.
+function drillGroup(list) {
+  const out = [], byName = {};
+  list.forEach((x) => {
+    if (!x.name) { out.push({ id: x.id, name: '', score: x.score, times: 1 }); return; }
+    const g = byName[x.name];
+    if (!g) { byName[x.name] = { id: x.id, name: x.name, score: x.score, times: 1 }; out.push(byName[x.name]); }
+    else if (x.score === g.score) g.times++;
+  });
+  return out;
 }
 function drill(d) {
   const lock = LockService.getScriptLock(); lock.waitLock(8000);
   try {
-    const kind = /^rank2_/.test(d.action) && d.mode === 'core' ? 'core' : 'mod', act = d.action.replace(/^rank2_/, 'rank_');
+    const kind = /^rank2_/.test(d.action) && d.mode === 'core' ? 'core' : 'mod', act = d.action.replace(/^rank2_/, 'rank_'), since = String(d.since || '');
     const sh = drillSheet(), cell = (v) => { const s = v == null ? '' : String(v); return /^[=+\-@]/.test(s) ? "'" + s : s; };
     if (act === 'rank_add') {
       sh.appendRow([d.id, d.time, d.grade, d.count, d.score, d.correct, d.secs, d.device, '', DRILL_KIND[kind]].map(cell));
-      const list = drillSorted(drillRows(sh), d.grade, d.count, kind);
-      return { ok: true, rank: list.findIndex((x) => x.id === String(d.id)) + 1, total: list.length };
+      const list = drillSorted(drillRows(sh), d.grade, d.count, kind, since);
+      return { ok: true, rank: drillGroup(list).findIndex((x) => x.id === String(d.id)) + 1, total: list.length };
     }
     if (act === 'rank_name') {
-      const list = drillSorted(drillRows(sh), d.grade, d.count, kind), i = list.findIndex((x) => x.id === String(d.id));
-      if (i < 0) return { ok: false, reason: 'not_found' };
-      if (i >= 5) return { ok: false, reason: 'not_top' };
-      if (list[i].name) return { ok: false, reason: 'already' };
-      sh.getRange(list[i].row, 9).setValue(cell(d.name));
+      const rows = drillRows(sh), me = rows.find((x) => x.id === String(d.id));
+      if (!me) return { ok: false, reason: 'not_found' };
+      if (me.name) return { ok: false, reason: 'already' };
+      const i = drillGroup(drillSorted(rows, d.grade, d.count, kind, since)).findIndex((x) => x.id === me.id);
+      if (i < 0 || i >= 5) return { ok: false, reason: 'not_top' };
+      sh.getRange(me.row, 9).setValue(cell(d.name));
     }
     const rows = drillRows(sh), boards = {};
     [1, 2, 3].forEach((g) => [10, 20, 30].forEach((c) => {
-      boards[g + '-' + c] = drillSorted(rows, g, c, kind).slice(0, 5).map((x) => ({ name: x.name, score: x.score, correct: x.correct, secs: x.secs, date: String(x.time).slice(0, 10) }));
+      boards[g + '-' + c] = drillGroup(drillSorted(rows, g, c, kind, since)).slice(0, 5).map((x) => ({ name: x.name, score: x.score, times: x.times }));
     }));
     const plays = { mod: rows.filter((x) => x.kind === 'mod').length, core: rows.filter((x) => x.kind === 'core').length };
-    return { ok: true, boards, mode: kind, plays };
+    return { ok: true, boards, mode: kind, plays, since };
   } finally { lock.releaseLock(); }
 }

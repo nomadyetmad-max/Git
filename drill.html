@@ -156,6 +156,20 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
 .foot a:hover { border-color: var(--blue) }
 @media (max-width: 480px) { .top h1 { font-size: 32px } .sent { font-size: 19px } .pattern .name { font-size: 20px } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+.board li { grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center }
+.board li .r { display: flex; align-items: center; justify-content: center }
+.board li .r svg { width: 30px; height: 34px; display: block }
+.board li .times { font-family: var(--sans); font-size: 12px; font-weight: 700; color: var(--navy); background: var(--paper); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; margin-left: 6px; white-space: nowrap }
+.reset { font-size: 13px; color: var(--muted); background: var(--band); border-radius: 10px; padding: 8px 12px }
+.reset b { color: var(--navy) }
+dialog.nick { border: 1px solid var(--line); border-radius: 20px; padding: 26px 24px; background: var(--paper); color: var(--ink); width: min(420px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0, 0, 0, .25) }
+dialog.nick::backdrop { background: rgba(18, 32, 31, .45) }
+dialog.nick form { display: flex; flex-direction: column; gap: 14px }
+dialog.nick .medal-big svg { width: 56px; height: 64px }
+dialog.nick h3 { font-family: var(--soft); font-size: 22px; color: var(--navy) }
+dialog.nick p { font-size: 14px; color: var(--muted) }
+dialog.nick input { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 16px }
+dialog.nick .err { color: var(--bad); font-size: 13.5px; min-height: 1em }
 </style>
 </head><body>
 <div class="wrap">
@@ -214,6 +228,7 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
     <div class="col">
       <div class="card">
         <h2 id="board-title">랭킹 TOP 5</h2>
+        <p class="reset"></p>
         <p class="sub" id="board-sub">학년과 문장 수마다 따로 순위를 매겨요.</p>
         <ol class="board" id="board"><li class="empty">랭킹을 불러오는 중…</li></ol>
         <p class="best" id="best"></p>
@@ -251,12 +266,12 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
         <div class="big"><p class="total" id="r-score">0<small>점</small></p>
           <p class="stat">정답<b id="r-correct">0/10</b></p><p class="stat">평균 시간<b id="r-avg">0초</b></p><p class="stat">시간 보너스<b id="r-bonus">0</b></p></div>
         <p class="rankmsg" id="r-rank">순위를 확인하는 중…</p>
-        <form class="namef" id="namef" hidden autocomplete="off"><input id="name" maxlength="12" placeholder="랭킹에 올릴 이름 (12자 이내)" aria-label="랭킹에 올릴 이름"><button class="btn" type="submit">이름 등록</button></form>
+        <form class="namef" id="namef" hidden autocomplete="off"><input id="name" maxlength="12" placeholder="닉네임 (12자 이내)" aria-label="닉네임"><button class="btn" type="submit">랭킹에 등록</button></form>
         <div class="actions"><button class="btn ghost" type="button" id="home">설정으로</button><button class="btn" type="button" id="again">같은 설정으로 다시</button></div>
       </div>
       <div class="card"><h2>문장별 돌아보기</h2><ol class="review" id="review"></ol></div>
     </div>
-    <div class="col"><div class="card"><h2 id="board2-title">랭킹 TOP 5</h2><ol class="board" id="board2"></ol></div></div>
+    <div class="col"><div class="card"><h2 id="board2-title">랭킹 TOP 5</h2><p class="reset"></p><ol class="board" id="board2"></ol></div></div>
   </section>
 
   <footer class="foot">
@@ -264,6 +279,16 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
+<dialog class="nick" id="nick" aria-labelledby="nick-title">
+  <form id="nickf" autocomplete="off">
+    <div class="medal-big" id="nick-medal"></div>
+    <h3 id="nick-title">랭킹에 올랐어요!</h3>
+    <p id="nick-msg"></p>
+    <input id="nick-in" maxlength="12" placeholder="닉네임 (12자 이내)" aria-label="닉네임">
+    <p class="err" id="nick-err"></p>
+    <div class="actions"><button class="btn ghost" type="button" id="nick-later">나중에</button><button class="btn" type="submit">랭킹에 등록</button></div>
+  </form>
+</dialog>
 <script src="/drill-data.js"></script>
 <script>
 const D = window.DRILL, $ = (id) => document.getElementById(id);
@@ -314,7 +339,21 @@ function setupInfo() {
 function renderBoard(el) {
   if (!S.boards) { el.innerHTML = `<li class="empty">${S.boardErr ? '랭킹 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.' : '랭킹을 불러오는 중…'}</li>`; return; }
   const list = S.boards[`${S.g}-${S.c}`] || [];
-  el.innerHTML = list.length ? list.map((x, i) => `<li><span class="r">${i + 1}</span><span class="n${x.name ? '' : ' none'}">${x.name ? esc(x.name) : '이름 미등록'}</span><span class="s">${x.score}점</span></li>`).join('') : '<li class="empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요.</li>';
+  el.innerHTML = list.length ? list.map((x, i) => `<li><span class="r">${medal(i + 1)}</span><span class="n${x.name ? '' : ' none'}">${x.name ? esc(x.name) : '이름 미등록'}${x.times > 1 ? `<span class="times">${x.times}회 달성</span>` : ''}</span><span class="s">${x.score}점</span></li>`).join('') : '<li class="empty">이번 주 기록이 아직 없어요. 첫 번째 주인공이 되어 보세요.</li>';
+  document.querySelectorAll('.reset').forEach((p) => { p.innerHTML = resetText(); });
+}
+// 메달: 1·2·3등은 그림, 4·5등은 숫자
+function medal(n) {
+  const c = { 1: ['#f2c94c', '#c9971c', '#fff3c4'], 2: ['#cfd6dc', '#8e9aa5', '#f3f6f8'], 3: ['#e0a370', '#a8652f', '#f8dcc4'] }[n];
+  if (!c) return `<span>${n}</span>`;
+  return `<svg viewBox="0 0 30 34" role="img" aria-label="${n}등"><path d="M8 0h6l3 9h-6z" fill="#4d8a8c"/><path d="M22 0h-6l-3 9h6z" fill="#1f5f63"/><circle cx="15" cy="21" r="11" fill="${c[0]}" stroke="${c[1]}" stroke-width="2"/><circle cx="15" cy="21" r="7.5" fill="none" stroke="${c[2]}" stroke-width="1.2" opacity=".8"/><text x="15" y="25.5" text-anchor="middle" font-family="Georgia, serif" font-size="12" font-weight="700" fill="${c[1]}">${n}</text></svg>`;
+}
+// 다음 초기화(목요일 00:00, 한국 시간)까지
+function resetText() {
+  const k = new Date(Date.now() + 9 * 3600e3), back = (k.getUTCDay() - 4 + 7) % 7;
+  const next = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - back + 7) - 9 * 3600e3, left = next - Date.now();
+  const d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), m = Math.floor(left % 36e5 / 6e4);
+  return `랭킹은 <b>매주 목요일 00:00</b>(한국 시간)에 초기화돼요 · 다음 초기화까지 ${d ? d + '일 ' : ''}${h}시간${d ? '' : ' ' + m + '분'}`;
 }
 function showPlays(p) {
   if (!p) return; const n = (p.mod || 0) + (p.core || 0); if (!n) return;
@@ -463,22 +502,42 @@ async function finish() {
     const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'submit', grade: S.g, count: S.c, score: S.score, correct, secs: Math.round(secs), device: deviceId() }) });
     const d = await r.json(); if (!r.ok) throw d;
     S.myId = { id: d.id, token: d.token };
-    $('r-rank').textContent = d.rank <= 5 ? `고${S.g} ${S.c}문장에서 전체 ${d.total}개 기록 중 ${d.rank}등! 이름을 남겨 랭킹에 올려 보세요.` : `전체 ${d.total}개 기록 중 ${d.rank}등이에요. 5등 안에 들면 랭킹에 이름을 올릴 수 있어요.`;
+    $('r-rank').textContent = d.rank <= 5 ? `고${S.g} ${S.c}문장에서 이번 주 ${d.total}개 기록 중 ${d.rank}등! 닉네임을 남겨 랭킹에 올려 보세요.` : `이번 주 ${d.total}개 기록 중 ${d.rank}등이에요. 이번 주 5등 안에 들면 랭킹에 닉네임을 올릴 수 있어요.`;
     $('namef').hidden = d.rank > 5;
+    if (d.rank <= 5) openNick(d.rank, d.total);
   } catch (e) { $('r-rank').textContent = '랭킹 서버에 연결하지 못해 이번 기록은 이 기기에만 저장했어요.'; }
   await loadBoards();
 }
+async function register(name) {
+  const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'name', grade: S.g, count: S.c, name, id: S.myId.id, token: S.myId.token }) });
+  const d = await r.json().catch(() => ({}));
+  if (r.ok) { S.boards = d.boards; renderBoard($('board2')); renderBoard($('board')); $('namef').hidden = true; $('r-rank').textContent = `'${name}' 닉네임으로 랭킹에 올렸어요.`; store('nick', name); return ''; }
+  return d.error === 'not_top' ? '그 사이 다른 친구들의 기록에 밀려 5등 밖으로 나갔어요.' : d.error === 'bad_name' ? '닉네임은 한글, 영어, 숫자로 적어 주세요.' : d.error === 'already' ? '이미 등록한 기록이에요.' : '등록하지 못했어요. 잠시 후 다시 시도해 주세요.';
+}
+function openNick(rank, total) {
+  $('nick-medal').innerHTML = medal(rank);
+  $('nick-title').textContent = `이번 주 ${rank}등이에요!`;
+  $('nick-msg').textContent = `고${S.g} ${S.c}문장 · ${S.score}점. 닉네임을 적으면 랭킹에 올라가요. 같은 닉네임으로 최고 점수를 또 달성하면 달성 횟수가 함께 표시돼요.`;
+  $('nick-in').value = store('nick') || ''; $('nick-err').textContent = '';
+  try { $('nick').showModal(); } catch (e) { $('nick').setAttribute('open', ''); }
+  setTimeout(() => $('nick-in').focus(), 50);
+}
+$('nickf').onsubmit = async (e) => {
+  e.preventDefault(); const name = $('nick-in').value.trim(); if (!name || !S.myId) { $('nick-err').textContent = '닉네임을 적어 주세요.'; return; }
+  const btn = $('nickf').querySelector('button[type=submit]'); btn.disabled = true;
+  let err; try { err = await register(name); } catch (x) { err = '등록하지 못했어요. 잠시 후 다시 시도해 주세요.'; }
+  btn.disabled = false;
+  if (err) { $('nick-err').textContent = err; if (/밖으로|이미/.test(err)) setTimeout(() => $('nick').close(), 1600); } else $('nick').close();
+};
+$('nick-later').onclick = () => $('nick').close();
 $('namef').onsubmit = async (e) => {
   e.preventDefault(); const name = $('name').value.trim(); if (!name || !S.myId) return;
   const btn = $('namef').querySelector('button'); btn.disabled = true;
-  try {
-    const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'name', grade: S.g, count: S.c, name, id: S.myId.id, token: S.myId.token }) });
-    const d = await r.json();
-    if (r.ok) { S.boards = d.boards; renderBoard($('board2')); renderBoard($('board')); $('namef').hidden = true; $('r-rank').textContent = `'${name}' 이름으로 랭킹에 올렸어요.`; }
-    else $('r-rank').textContent = d.error === 'not_top' ? '그 사이 다른 친구들의 기록에 밀려 5등 밖으로 나갔어요.' : d.error === 'bad_name' ? '이름은 한글, 영어, 숫자로 적어 주세요.' : '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.';
-  } catch (x) { $('r-rank').textContent = '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.'; }
+  let err; try { err = await register(name); } catch (x) { err = '등록하지 못했어요. 잠시 후 다시 시도해 주세요.'; }
+  if (err) $('r-rank').textContent = err;
   btn.disabled = false;
 };
+
 $('again').onclick = start;
 $('home').onclick = () => { $('result').hidden = true; $('setup').hidden = false; setupInfo(); window.scrollTo({ top: 0 }); };
 $('start').onclick = start;

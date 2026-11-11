@@ -23,6 +23,12 @@ async function askSheet(payload) {
 const ipOf = (req) => String(req.headers['x-forwarded-for'] || '?').split(',')[0].trim();
 const sign = (id) => crypto.createHmac('sha256', 'wc-drill|' + (process.env.LOG_SECRET || '')).update(String(id)).digest('hex').slice(0, 32);
 const int = (v) => (Number.isInteger(v) ? v : NaN);
+// 랭킹 주간 시작: 가장 최근 목요일 00:00 (한국 시간). 시트의 시간 칸과 같은 'YYYY-MM-DD HH:MM:SS' 형식
+function weekStart(now = Date.now()) {
+  const k = new Date(now + 9 * 3600e3), back = (k.getUTCDay() - 4 + 7) % 7;
+  const t = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - back));
+  return t.toISOString().slice(0, 10) + ' 00:00:00';
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -32,10 +38,11 @@ module.exports = async (req, res) => {
   const checkMode = (mode, d) => (mode === 'core' && d.mode !== 'core' ? { error: 'script_old' } : d);
   if (req.method === 'GET') {
     const mode = modeOf(req.query?.mode);
-    if (cache[mode] && Date.now() - cachedAt[mode] < 20e3) return res.status(200).json(cache[mode]);
-    const d = checkMode(mode, await askSheet({ action: act(mode, 'top'), mode }));
+    const since = weekStart();
+    if (cache[mode] && cache[mode].since === since && Date.now() - cachedAt[mode] < 20e3) return res.status(200).json(cache[mode]);
+    const d = checkMode(mode, await askSheet({ action: act(mode, 'top'), mode, since }));
     if (d.error) return res.status(503).json(d);
-    cache[mode] = { boards: d.boards, plays: d.plays || null }; cachedAt[mode] = Date.now();
+    cache[mode] = { boards: d.boards, plays: d.plays || null, since }; cachedAt[mode] = Date.now();
     return res.status(200).json(cache[mode]);
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
@@ -55,7 +62,7 @@ module.exports = async (req, res) => {
     const device = /^[a-z0-9]{8,40}$/.test(String(body.device || '')) ? body.device : 'ip-' + ip;
     const id = now.toString(36) + crypto.randomBytes(4).toString('hex');
     const time = new Date(now + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 19);
-    const d = await askSheet({ action: act(mode, 'add'), mode, id, time, grade, count, score, correct, secs, device });
+    const d = await askSheet({ action: act(mode, 'add'), mode, since: weekStart(now), id, time, grade, count, score, correct, secs, device });
     if (d.error) return res.status(503).json(d);
     cache[mode] = null;
     return res.status(200).json({ id, token: sign(id), rank: d.rank, total: d.total });
@@ -65,9 +72,9 @@ module.exports = async (req, res) => {
     if (!/^[a-z0-9]{8,30}$/.test(id) || tok.length !== 32 || !crypto.timingSafeEqual(Buffer.from(tok), Buffer.from(sign(id)))) return res.status(403).json({ error: 'bad_token' });
     const name = String(body.name || '').replace(/[^\p{L}\p{N} ._-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
     if (!name) return res.status(400).json({ error: 'bad_name' });
-    const d = await askSheet({ action: act(mode, 'name'), mode, id, grade, count, name });
+    const d = await askSheet({ action: act(mode, 'name'), mode, since: weekStart(), id, grade, count, name });
     if (d.error) return res.status(d.error === 'not_top' || d.error === 'already' ? 409 : 503).json(d);
-    cache[mode] = { boards: d.boards }; cachedAt[mode] = Date.now();
+    cache[mode] = { boards: d.boards, plays: d.plays || null, since: weekStart() }; cachedAt[mode] = Date.now();
     return res.status(200).json(cache[mode]);
   }
   return res.status(400).json({ error: 'bad_request' });
