@@ -1,0 +1,464 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="문장 속 비필수 문장성분(수식어)과 그 수식 대상을 드래그로 찾는 구문 분석 훈련. 고1·고2·고3 모의고사 수준.">
+<title>문장성분 Drill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: the same ivory notebook as Writing Clinic. One sentence sits on a ruled strip like an exam line; the student drags over words with two pens:
+   amber for the modifier (it gets parentheses), green for the word it modifies (it gets an underline). A thin timer rail runs above the sentence. */
+:root {
+  --bg: #f6f2e7; --paper: #fffdf6; --ink: #24312a; --muted: #6c7369; --line: #e3dccb;
+  --navy: #2f5d46; --blue: #5b8f6f; --band: #edf0e2; --leaf: #dfe9d6; --on-navy: #fffdf6;
+  --mod: #a8641c; --mod-bg: #f7e6c4; --tgt: #2f6b48; --tgt-bg: #d7ead9;
+  --bad: #b44a37; --bad-bg: #f8e6df; --ok: #3d7a4f; --rule: #ece5d4; --shadow: rgba(47, 93, 70, .07);
+  --sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --soft: 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', serif;
+  --eng: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
+  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --leaf: #26372d; --on-navy: #151b17;
+  --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
+  --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
+  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --leaf: #26372d; --on-navy: #151b17;
+  --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
+  --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body.playing .top p { display: none }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; word-break: keep-all }
+.wrap { max-width: 960px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px }
+h1, h2, h3, p { margin: 0 }
+button, input { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+.tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px; overflow-x: auto }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 20px; border-radius: 99px; white-space: nowrap }
+.tabs a:hover { color: var(--navy) }
+.tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
+.top { display: flex; flex-direction: column; gap: 8px }
+.top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; color: var(--navy) }
+.top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); margin-top: 6px }
+.top p { font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
+
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.card > h2 { font-family: var(--soft); font-size: 19px; font-weight: 700; color: var(--navy) }
+.card .sub { color: var(--muted); font-size: 13.5px }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0 }
+
+.field { display: flex; flex-direction: column; gap: 8px }
+.field > span { font-weight: 700; font-size: 14px; color: var(--muted) }
+.chips { display: flex; flex-wrap: wrap; gap: 8px }
+.chips button { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 8px 18px; font-weight: 700; cursor: pointer; color: var(--muted) }
+.chips button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--on-navy) }
+.btn { border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 700; cursor: pointer; background: var(--navy); color: var(--on-navy); font-size: 16px }
+.btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--line) }
+.btn:disabled { opacity: .45; cursor: default }
+.rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px }
+.rules b { color: var(--navy) }
+.pts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px }
+.pts b { font-family: var(--serif); font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums; text-align: right }
+details.crit { border-top: 1px solid var(--rule); padding-top: 10px }
+details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
+.crit-body { display: flex; flex-direction: column; gap: 10px; font-size: 14px; margin-top: 10px }
+.crit-body h3 { font-size: 14px; color: var(--muted) }
+.crit-body ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px }
+.m { background: var(--mod-bg); color: var(--mod); border-radius: 4px; padding: 0 4px; font-weight: 700 }
+.t { background: var(--tgt-bg); color: var(--tgt); border-radius: 4px; padding: 0 4px; font-weight: 700 }
+
+.board { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none }
+.board li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 12px; border-radius: 10px; background: var(--band) }
+.board li .r { font-family: var(--serif); font-weight: 600; color: var(--navy) }
+.board li .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.board li .n.none { color: var(--muted) }
+.board li .s { font-family: var(--serif); font-weight: 600; font-variant-numeric: tabular-nums }
+.board li.me { outline: 2px solid var(--blue) }
+.board .empty { background: none; color: var(--muted); display: block; padding: 4px 0 }
+.best { font-size: 13.5px; color: var(--muted) }
+
+/* game */
+.hud { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between }
+.hud .q { font-weight: 700; color: var(--muted) }
+.hud .q b { font-family: var(--serif); color: var(--navy); font-size: 22px }
+.hud .sc { font-family: var(--serif); font-weight: 600; font-size: 28px; color: var(--navy); font-variant-numeric: tabular-nums }
+.hud .sc small { font-family: var(--sans); font-size: 13px; color: var(--muted); font-weight: 500; margin-right: 6px }
+.timer { position: relative; height: 10px; border-radius: 99px; background: var(--band); overflow: hidden }
+.timer i { position: absolute; inset: 0 auto 0 0; background: var(--blue); border-radius: 99px; width: 100% }
+.timer.low i { background: var(--bad) }
+.timer em { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--paper) }
+.tline { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
+.tline b { color: var(--navy) }
+.pattern { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: var(--leaf) }
+.pattern .role { font-size: 13px; font-weight: 700; color: var(--blue); letter-spacing: .04em }
+.pattern .name { font-family: var(--soft); font-weight: 700; font-size: 24px; color: var(--navy); line-height: 1.35 }
+.pattern .name .x { color: var(--muted); font-weight: 400; margin: 0 6px }
+.pattern .how { font-size: 14px }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.modes button { text-align: left; border: 2px solid var(--line); background: var(--paper); border-radius: 14px; padding: 10px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0 }
+.modes button .k { font-weight: 700; font-size: 14px }
+.modes button .v { font-family: var(--eng); font-size: 15px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.modes #mode-mod .k { color: var(--mod) } .modes #mode-tgt .k { color: var(--tgt) }
+.modes #mode-mod[aria-pressed="true"] { border-color: var(--mod); background: var(--mod-bg) }
+.modes #mode-tgt[aria-pressed="true"] { border-color: var(--tgt); background: var(--tgt-bg) }
+.sent { font-family: var(--eng); font-size: 22px; line-height: 2.3; padding: 18px 16px; border-radius: 14px; background: var(--paper);
+  border: 1px solid var(--line); touch-action: none; user-select: none; -webkit-user-select: none; cursor: text }
+.tk { display: inline; border: 0; background: none; padding: 3px 2px; margin: 0; border-radius: 6px; font: inherit; color: var(--ink); cursor: pointer; line-height: inherit }
+.tk.ms { background: var(--mod-bg); color: var(--mod) }
+.tk.ts { background: var(--tgt-bg); color: var(--tgt); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px }
+.tk.ms.ts { background: linear-gradient(var(--mod-bg) 50%, var(--tgt-bg) 50%) }
+.hint { font-size: 13.5px; color: var(--muted) }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end }
+.fb { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--band) }
+.fb .head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; font-weight: 700 }
+.fb .gain { font-family: var(--serif); font-size: 22px; color: var(--navy) }
+.fb ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px }
+.ok { color: var(--ok) } .no { color: var(--bad) }
+.ans { font-family: var(--eng); font-size: 18px; line-height: 2 }
+.ans .am { color: var(--mod); background: var(--mod-bg); border-radius: 4px; padding: 1px 2px }
+.ans .at { color: var(--tgt); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px }
+.ans .ao { text-decoration: underline dotted; text-decoration-color: var(--tgt); text-underline-offset: 4px }
+
+/* result */
+.big { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline }
+.big .total { font-family: var(--serif); font-weight: 600; font-size: 56px; color: var(--navy); line-height: 1; font-variant-numeric: tabular-nums }
+.big .total small { font-size: 20px; color: var(--muted); margin-left: 4px }
+.stat { display: flex; flex-direction: column; font-size: 13px; color: var(--muted) }
+.stat b { font-family: var(--serif); font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums }
+.rankmsg { padding: 14px 16px; border-radius: 12px; background: var(--leaf); color: var(--navy); font-weight: 700 }
+.namef { display: flex; flex-wrap: wrap; gap: 8px }
+.namef input { flex: 1 1 180px; min-width: 0; border: 1px solid var(--line); background: var(--paper); border-radius: 12px; padding: 10px 14px }
+.review { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none }
+.review li { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px }
+.review li.wrong { border-color: var(--bad); background: var(--bad-bg) }
+.review .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px }
+.foot { font-size: 13px; color: var(--muted); text-align: center }
+.foot a { color: var(--navy) }
+@media (max-width: 480px) { .top h1 { font-size: 32px } .sent { font-size: 19px } .pattern .name { font-size: 20px } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+</head><body>
+<div class="wrap">
+  <nav class="tabs" aria-label="메뉴"><a href="/">글쓰기</a><a href="/stats">통계</a><a href="/drill" aria-current="page">문장성분 Drill</a></nav>
+  <header class="top">
+    <h1>문장성분 Drill<small>비필수 문장성분(수식어) 찾기 훈련</small></h1>
+    <p>모의고사에서 주어지는 시간은 한 문장에 약 10초예요. 문제마다 주어지는 패턴을 보고, 문장 속 수식어와 그것이 꾸미는 대상을 손가락이나 마우스로 쓱 드래그해서 찾아보세요.</p>
+  </header>
+
+  <!-- 1. 설정 -->
+  <section id="setup" class="grid2">
+    <div class="col">
+      <div class="card">
+        <h2>게임 설정</h2>
+        <div class="field"><span>학년 (모의고사 난이도)</span><div class="chips" id="grades"><button type="button" data-g="1" aria-pressed="true">고1</button><button type="button" data-g="2" aria-pressed="false">고2</button><button type="button" data-g="3" aria-pressed="false">고3</button></div></div>
+        <div class="field"><span>문장 수</span><div class="chips" id="counts"><button type="button" data-c="10" aria-pressed="true">10문장</button><button type="button" data-c="20" aria-pressed="false">20문장</button><button type="button" data-c="30" aria-pressed="false">30문장</button></div></div>
+        <div class="pts" id="pts"></div>
+        <button class="btn" id="start" type="button">시작하기</button>
+      </div>
+      <div class="card">
+        <h2>푸는 방법과 채점 기준</h2>
+        <ol class="rules">
+          <li>화면 위의 <b>패턴</b>을 확인해요. 예: <b>주어 × 관계대명사절</b> = 주어 자리의 명사를 꾸미는 관계대명사절</li>
+          <li><span class="m">① 수식어</span>를 고른 상태에서 수식어 덩어리를 처음부터 끝까지 드래그해요. 손을 떼면 자동으로 ②로 넘어가요.</li>
+          <li><span class="t">② 수식 대상</span>에서 그 수식어가 꾸미는 말을 드래그해요. 단어 하나는 톡 누르기만 해도 돼요.</li>
+          <li>다시 드래그하면 새로 골라져요. 다 골랐으면 <b>확인</b>.</li>
+        </ol>
+        <details class="crit" open id="crit">
+          <summary>억울하지 않게: 정답으로 인정하는 범위</summary>
+          <div class="crit-body">
+            <h3>공통</h3>
+            <ul>
+              <li>띄어쓰기 단위(어절)로 골라요. 쉼표·마침표는 단어에 붙어 있으니 신경 쓰지 않아도 돼요.</li>
+              <li>문장 안에 다른 수식어가 있어도, <b>패턴에 맞는 것 하나</b>만 정답이에요.</li>
+            </ul>
+            <h3><span class="m">수식어</span>는 덩어리 전체</h3>
+            <ul>
+              <li>시작 신호(전치사, 관계사, 접속사, to, 분사)부터 덩어리가 끝나는 곳까지 정확히 골라야 정답이에요.</li>
+              <li>덩어리 안에 들어 있는 다른 수식어도 함께 포함해요. 예: <i>a book (about the history of science)</i></li>
+              <li>전치사 + 관계대명사(<i>in which</i>)는 전치사부터 골라요.</li>
+            </ul>
+            <h3><span class="t">수식 대상</span>은 핵심 단어</h3>
+            <ul>
+              <li><b>명사</b>: 명사만 고르면 정답. 바로 앞의 관사·소유격·다른 형용사(<i>the, a, my, new</i>)는 넣어도, 빼도 정답이에요. 단, 이번 문제의 수식어는 넣지 않아요.</li>
+              <li><b>동사</b>: 본동사만 고르면 정답. 조동사·have·be·not은 넣어도 돼요.</li>
+              <li><b>준동사</b>: 동사원형이나 -ing 부분을 골라요. to부정사의 to, 함께 붙은 목적어는 넣어도 돼요.</li>
+              <li><b>형용사·부사</b>: 그 단어. <i>fast enough, too slowly</i>처럼 함께 쓰인 말은 하나만 골라도, 둘 다 골라도 정답.</li>
+              <li><b>구·절</b>: 꾸밈을 받는 구·절 전체를 골라요.</li>
+              <li><b>문장 전체</b>: 주절을 골라요. 주어와 동사가 들어 있으면 정답이고, 주절의 나머지는 넣어도 돼요.</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h2 id="board-title">랭킹 TOP 5</h2>
+        <p class="sub" id="board-sub">학년과 문장 수마다 따로 순위를 매겨요.</p>
+        <ol class="board" id="board"><li class="empty">랭킹을 불러오는 중…</li></ol>
+        <p class="best" id="best"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 게임 -->
+  <section id="game" class="card" hidden aria-live="polite">
+    <div class="hud"><p class="q">문항 <b id="qn">1</b> / <span id="qt">10</span></p><p class="sc"><small>점수</small><span id="score">0</span></p></div>
+    <div><div class="timer" id="timer"><i id="bar"></i><em id="mk1"></em><em id="mk2"></em></div>
+      <div class="tline"><span id="tleft">30초</span><span id="tbonus"></span></div></div>
+    <div class="pattern"><p class="role" id="p-role">형용사 역할</p><p class="name" id="p-name"></p><p class="how" id="p-how"></p></div>
+    <div class="modes">
+      <button type="button" id="mode-mod" aria-pressed="true"><span class="k">① 수식어 고르기</span><span class="v" id="v-mod">드래그해서 고르세요</span></button>
+      <button type="button" id="mode-tgt" aria-pressed="false"><span class="k">② 수식 대상 고르기</span><span class="v" id="v-tgt">드래그해서 고르세요</span></button>
+    </div>
+    <div class="sent" id="sent" role="group" aria-label="문장"></div>
+    <p class="hint" id="hint">처음 누른 단어부터 손을 뗀 단어까지 골라져요.</p>
+    <div class="actions" id="act"><button class="btn ghost" type="button" id="clear">다시 고르기</button><button class="btn" type="button" id="check" disabled>확인</button></div>
+    <div class="fb" id="fb" hidden>
+      <div class="head"><span id="fb-title"></span><span class="gain" id="fb-gain"></span></div>
+      <ul id="fb-list"></ul>
+      <p class="ans" id="fb-ans"></p>
+      <div class="actions"><button class="btn" type="button" id="next">다음 문장</button></div>
+    </div>
+    <details class="crit"><summary>채점 기준 다시 보기</summary><div class="crit-body" id="crit-copy"></div></details>
+  </section>
+
+  <!-- 3. 결과 -->
+  <section id="result" class="grid2" hidden>
+    <div class="col">
+      <div class="card">
+        <h2 id="r-title">결과</h2>
+        <div class="big"><p class="total" id="r-score">0<small>점</small></p>
+          <p class="stat">정답<b id="r-correct">0/10</b></p><p class="stat">평균 시간<b id="r-avg">0초</b></p><p class="stat">시간 보너스<b id="r-bonus">0</b></p></div>
+        <p class="rankmsg" id="r-rank">순위를 확인하는 중…</p>
+        <form class="namef" id="namef" hidden autocomplete="off"><input id="name" maxlength="12" placeholder="랭킹에 올릴 이름 (12자 이내)" aria-label="랭킹에 올릴 이름"><button class="btn" type="submit">이름 등록</button></form>
+        <div class="actions"><button class="btn ghost" type="button" id="home">설정으로</button><button class="btn" type="button" id="again">같은 설정으로 다시</button></div>
+      </div>
+      <div class="card"><h2>문장별 돌아보기</h2><ol class="review" id="review"></ol></div>
+    </div>
+    <div class="col"><div class="card"><h2 id="board2-title">랭킹 TOP 5</h2><ol class="board" id="board2"></ol></div></div>
+  </section>
+
+  <p class="foot">화전 우등생 학원 · <a href="/">Writing Clinic</a></p>
+</div>
+<script src="/drill-data.js"></script>
+<script>
+const D = window.DRILL, $ = (id) => document.getElementById(id);
+const LIMIT = { 1: 30, 2: 36, 3: 45 }, P_MOD = 60, P_TGT = 40, B1 = 50, B2 = 20;
+const S = { g: 1, c: 10, qs: [], i: 0, score: 0, mode: 'mod', sel: { mod: null, tgt: null }, t0: 0, elapsed: 0, timer: null, locked: false, results: [], boards: null, myId: null };
+function store(k, v) { try { if (v === undefined) return localStorage.getItem('wc.' + k); localStorage.setItem('wc.' + k, v); } catch (e) { return null; } }
+function deviceId() { let d = store('device'); if (!d || !/^[a-z0-9]{8,40}$/.test(d)) { d = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); store('device', d); } return d; }
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const josa = (w, a, b) => { const c = w.replace(/[^가-힣]/g, '').slice(-1); if (!c) return w + b; return w + (((c.charCodeAt(0) - 0xac00) % 28) ? a : b); };
+
+// ---- 문장 표기 해석: {수식어} [대상] ~선택
+function parse(src) {
+  const toks = []; let inM = false, inT = false, cur = null;
+  const push = () => { if (cur && cur.text) toks.push(cur); cur = null; };
+  for (const ch of src) {
+    if (ch === ' ') { push(); continue; }
+    if (!cur) cur = { text: '', role: null, opt: false };
+    if (ch === '{') { inM = true; continue; } if (ch === '}') { inM = false; continue; }
+    if (ch === '[') { inT = true; continue; } if (ch === ']') { inT = false; continue; }
+    if (ch === '~' && !cur.text) { cur.opt = true; continue; }
+    if (!cur.text && /[A-Za-z0-9'"]/.test(ch)) cur.role = inM ? 'mod' : inT ? 'tgt' : null;
+    cur.text += ch;
+  }
+  push();
+  return toks.map((t, i) => Object.assign(t, { i }));
+}
+function patternInfo(key) {
+  const [kind, a, b] = key.split('-');
+  if (kind === 'A') { const pos = D.pos[a], ty = D.adjType[b];
+    return { role: '형용사 역할 · 명사를 꾸미는 수식어', name: `${pos}<span class="x">×</span>${ty}`, how: `${pos} 자리에 있는 명사와, 그 명사를 꾸미는 ${josa(ty, '을', '를')} 찾으세요.`, plain: `${pos} × ${ty}` }; }
+  const tg = D.advTarget[a], ty = D.advType[b];
+  return { role: '부사 역할 · 명사 빼고 전부를 꾸미는 수식어', name: `${tg}<span class="x">×</span>${ty}`,
+    how: a === 'SE' ? `문장 전체(주절)와, 그것을 꾸미는 ${josa(ty, '을', '를')} 찾으세요.` : `${josa(tg, '을', '를')} 꾸미는 ${josa(ty, '을', '를')} 찾고, 꾸밈을 받는 ${tg}도 고르세요.`, plain: `${tg} × ${ty}` };
+}
+
+// ---- 설정 화면
+function pressed(box, attr, val) { box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(val)))); }
+$('grades').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S.g = +b.dataset.g; pressed($('grades'), 'g', S.g); setupInfo(); };
+$('counts').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S.c = +b.dataset.c; pressed($('counts'), 'c', S.c); setupInfo(); };
+function setupInfo() {
+  const L = LIMIT[S.g];
+  $('pts').innerHTML = `<span>수식어 정답</span><b>+${P_MOD}</b><span>수식 대상 정답</span><b>+${P_TGT}</b><span>둘 다 맞히고 ${Math.round(L / 3)}초 안에</span><b>+${B1}</b><span>둘 다 맞히고 ${Math.round(L * 2 / 3)}초 안에</span><b>+${B2}</b><span>한 문장 제한 시간</span><b>${L}초</b>`;
+  $('board-title').textContent = `랭킹 TOP 5 · 고${S.g} ${S.c}문장`;
+  renderBoard($('board'));
+  const best = store(`drillBest.${S.g}-${S.c}`);
+  $('best').textContent = best ? `이 기기의 최고 기록: ${best}점` : '';
+}
+function renderBoard(el) {
+  if (!S.boards) { el.innerHTML = `<li class="empty">${S.boardErr ? '랭킹 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.' : '랭킹을 불러오는 중…'}</li>`; return; }
+  const list = S.boards[`${S.g}-${S.c}`] || [];
+  el.innerHTML = list.length ? list.map((x, i) => `<li><span class="r">${i + 1}</span><span class="n${x.name ? '' : ' none'}">${x.name ? esc(x.name) : '이름 미등록'}</span><span class="s">${x.score}점</span></li>`).join('') : '<li class="empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요.</li>';
+}
+async function loadBoards() {
+  try { const r = await fetch('/api/drill'); if (!r.ok) throw 0; S.boards = (await r.json()).boards; S.boardErr = false; }
+  catch (e) { S.boardErr = true; }
+  renderBoard($('board')); renderBoard($('board2'));
+}
+
+// ---- 게임
+function start() {
+  const keys = Object.keys(D.bank);
+  for (let i = keys.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+  S.qs = keys.slice(0, S.c).map((k) => ({ key: k, toks: parse(D.bank[k][S.g - 1]) }));
+  S.i = 0; S.score = 0; S.results = []; S.myId = null;
+  $('qt').textContent = S.c; $('score').textContent = '0';
+  $('setup').hidden = true; $('result').hidden = true; $('game').hidden = false; document.body.classList.add('playing');
+  $('crit-copy').innerHTML = document.querySelector('#crit .crit-body').innerHTML;
+  const L = LIMIT[S.g]; $('mk1').style.left = (100 - 100 / 3) + '%'; $('mk2').style.left = (100 - 200 / 3) + '%';
+  $('tbonus').innerHTML = `<b>${Math.round(L / 3)}초</b> 안에 +${B1} · <b>${Math.round(L * 2 / 3)}초</b> 안에 +${B2}`;
+  window.scrollTo({ top: 0 });
+  showQ();
+}
+function showQ() {
+  const q = S.qs[S.i], info = patternInfo(q.key);
+  $('qn').textContent = S.i + 1;
+  $('p-role').textContent = info.role; $('p-name').innerHTML = info.name; $('p-how').textContent = info.how;
+  $('sent').innerHTML = q.toks.map((t) => `<button type="button" class="tk" data-i="${t.i}">${esc(t.text)}</button>`).join(' ');
+  S.sel = { mod: null, tgt: null }; S.locked = false; setMode('mod'); paint();
+  $('fb').hidden = true; $('act').hidden = false;
+  S.t0 = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 100); tick();
+}
+function tick() {
+  const L = LIMIT[S.g], el = (performance.now() - S.t0) / 1000, left = Math.max(0, L - el);
+  $('bar').style.width = (left / L * 100) + '%'; $('timer').classList.toggle('low', left < 6);
+  $('tleft').textContent = `${Math.ceil(left)}초 남음`;
+  if (left <= 0) grade(true);
+}
+function setMode(m) { S.mode = m; $('mode-mod').setAttribute('aria-pressed', String(m === 'mod')); $('mode-tgt').setAttribute('aria-pressed', String(m === 'tgt')); }
+function rangeSet(r) { if (!r) return new Set(); const s = new Set(); for (let i = Math.min(r[0], r[1]); i <= Math.max(r[0], r[1]); i++) s.add(i); return s; }
+function paint() {
+  const toks = S.qs[S.i].toks, m = rangeSet(S.sel.mod), t = rangeSet(S.sel.tgt);
+  $('sent').querySelectorAll('.tk').forEach((b) => { const i = +b.dataset.i; b.classList.toggle('ms', m.has(i)); b.classList.toggle('ts', t.has(i)); });
+  const txt = (s) => [...s].map((i) => toks[i].text).join(' ');
+  $('v-mod').textContent = m.size ? '( ' + txt(m) + ' )' : '드래그해서 고르세요';
+  $('v-tgt').textContent = t.size ? txt(t) : '드래그해서 고르세요';
+  $('check').disabled = !(m.size && t.size);
+}
+// 드래그: 처음 누른 어절 ~ 손을 뗀 어절
+let drag = null;
+$('sent').addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('.tk'); if (!b || S.locked) return;
+  e.preventDefault(); drag = { a: +b.dataset.i, mode: S.mode }; S.sel[S.mode] = [drag.a, drag.a]; paint();
+  try { $('sent').setPointerCapture(e.pointerId); } catch (x) {}
+});
+$('sent').addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY), b = el && el.closest && el.closest('.tk');
+  if (b && $('sent').contains(b)) { S.sel[drag.mode] = [drag.a, +b.dataset.i]; paint(); }
+});
+const endDrag = () => { if (!drag) return; const m = drag.mode; drag = null; if (m === 'mod' && !S.sel.tgt) setMode('tgt'); paint(); };
+$('sent').addEventListener('pointerup', endDrag); $('sent').addEventListener('pointercancel', endDrag);
+// 키보드: Enter로 한 어절, Shift+Enter로 범위 늘리기
+$('sent').addEventListener('keydown', (e) => {
+  const b = e.target.closest('.tk'); if (!b || S.locked || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault(); const i = +b.dataset.i, cur = S.sel[S.mode];
+  S.sel[S.mode] = e.shiftKey && cur ? [cur[0], i] : [i, i]; paint();
+});
+$('mode-mod').onclick = () => !S.locked && setMode('mod');
+$('mode-tgt').onclick = () => !S.locked && setMode('tgt');
+$('clear').onclick = () => { if (S.locked) return; S.sel = { mod: null, tgt: null }; setMode('mod'); paint(); };
+$('check').onclick = () => grade(false);
+
+function judge(toks, sel) {
+  const m = rangeSet(sel.mod), t = rangeSet(sel.tgt);
+  const am = new Set(toks.filter((x) => x.role === 'mod').map((x) => x.i)), core = toks.filter((x) => x.role === 'tgt').map((x) => x.i), opt = new Set(toks.filter((x) => x.opt).map((x) => x.i));
+  const modOk = m.size === am.size && [...m].every((i) => am.has(i));
+  const tgtOk = t.size > 0 && core.every((i) => t.has(i)) && [...t].every((i) => core.includes(i) || opt.has(i));
+  let modWhy = '';
+  if (!modOk) {
+    if (!m.size) modWhy = '수식어를 고르지 않았어요.';
+    else if ([...m].every((i) => am.has(i))) modWhy = '덩어리의 일부만 골랐어요. 끝까지 이어지는지 확인해 보세요.';
+    else if ([...am].every((i) => m.has(i))) modWhy = '덩어리 밖의 단어까지 골랐어요.';
+    else if ([...m].some((i) => am.has(i))) modWhy = '시작이나 끝 위치가 달라요.';
+    else modWhy = '다른 덩어리를 골랐어요. 패턴의 수식 대상을 다시 확인해 보세요.';
+  }
+  let tgtWhy = '';
+  if (!tgtOk) {
+    if (!t.size) tgtWhy = '수식 대상을 고르지 않았어요.';
+    else if ([...t].some((i) => am.has(i))) tgtWhy = '수식 대상에 수식어 자신이 들어가 있어요.';
+    else if (!core.some((i) => t.has(i))) tgtWhy = '다른 단어를 골랐어요.';
+    else if (!core.every((i) => t.has(i))) tgtWhy = '꾸밈을 받는 말이 다 들어가지 않았어요.';
+    else tgtWhy = '꾸밈을 받는 말 밖의 단어까지 골랐어요.';
+  }
+  return { modOk, tgtOk, modWhy, tgtWhy };
+}
+function annotate(toks) {
+  let out = '', inM = false;
+  toks.forEach((t, k) => {
+    const isM = t.role === 'mod';
+    if (isM && !inM) { out += '<span class="am">('; inM = true; }
+    const cls = t.role === 'tgt' ? 'at' : t.opt ? 'ao' : '';
+    const nextM = toks[k + 1] && toks[k + 1].role === 'mod', closing = inM && !nextM;
+    const pm = closing ? t.text.match(/^(.*?)([,.;:!?]*)$/) : [null, t.text, ''];
+    out += (cls ? `<span class="${cls}">${esc(pm[1])}</span>` : esc(pm[1]));
+    if (closing) { out += ')</span>' + esc(pm[2]); inM = false; }
+    out += ' ';
+  });
+  return out;
+}
+function grade(timeout) {
+  if (S.locked) return;
+  S.locked = true; clearInterval(S.timer); drag = null;
+  const q = S.qs[S.i], L = LIMIT[S.g], secs = Math.min(L, (performance.now() - S.t0) / 1000);
+  const j = judge(q.toks, S.sel);
+  let gain = (j.modOk ? P_MOD : 0) + (j.tgtOk ? P_TGT : 0), bonus = 0;
+  if (j.modOk && j.tgtOk && !timeout) bonus = secs <= L / 3 ? B1 : secs <= L * 2 / 3 ? B2 : 0;
+  gain += bonus; S.score += gain; $('score').textContent = S.score;
+  S.results.push({ key: q.key, toks: q.toks, ok: j.modOk && j.tgtOk, modOk: j.modOk, tgtOk: j.tgtOk, gain, bonus, secs, timeout });
+  $('fb-title').innerHTML = timeout ? '<span class="no">시간 초과</span>' : j.modOk && j.tgtOk ? '<span class="ok">정답!</span>' : '<span class="no">아쉬워요</span>';
+  $('fb-gain').textContent = `+${gain}점` + (bonus ? ` (시간 보너스 ${bonus})` : '');
+  $('fb-list').innerHTML = `<li class="${j.modOk ? 'ok' : 'no'}">수식어 ${j.modOk ? '정답 +' + P_MOD : '오답 · ' + j.modWhy}</li><li class="${j.tgtOk ? 'ok' : 'no'}">수식 대상 ${j.tgtOk ? '정답 +' + P_TGT : '오답 · ' + j.tgtWhy}</li><li>걸린 시간 ${secs.toFixed(1)}초</li>`;
+  $('fb-ans').innerHTML = annotate(q.toks);
+  $('next').textContent = S.i + 1 < S.qs.length ? '다음 문장' : '결과 보기';
+  $('act').hidden = true; $('fb').hidden = false; $('next').focus({ preventScroll: true });
+  $('fb').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+$('next').onclick = () => { S.i++; if (S.i < S.qs.length) showQ(); else finish(); };
+
+// ---- 결과와 랭킹
+async function finish() {
+  $('game').hidden = true; $('result').hidden = false; document.body.classList.remove('playing'); window.scrollTo({ top: 0 });
+  const n = S.results.length, correct = S.results.filter((r) => r.ok).length, secs = S.results.reduce((a, r) => a + r.secs, 0), bonus = S.results.reduce((a, r) => a + r.bonus, 0);
+  $('r-title').textContent = `결과 · 고${S.g} ${S.c}문장`;
+  $('r-score').innerHTML = `${S.score}<small>점</small>`; $('r-correct').textContent = `${correct}/${n}`;
+  $('r-avg').textContent = `${(secs / n).toFixed(1)}초`; $('r-bonus').textContent = `+${bonus}`;
+  $('review').innerHTML = S.results.map((r, i) => `<li class="${r.ok ? '' : 'wrong'}"><div class="meta"><b>${i + 1}. ${esc(patternInfo(r.key).plain)}</b><span>${r.timeout ? '시간 초과' : r.ok ? '정답' : `수식어 ${r.modOk ? '○' : '×'} · 대상 ${r.tgtOk ? '○' : '×'}`}</span><span>+${r.gain}점 · ${r.secs.toFixed(1)}초</span></div><p class="ans">${annotate(r.toks)}</p></li>`).join('');
+  const key = `drillBest.${S.g}-${S.c}`, prev = Number(store(key) || 0); if (S.score > prev) store(key, String(S.score));
+  $('board2-title').textContent = `랭킹 TOP 5 · 고${S.g} ${S.c}문장`;
+  $('namef').hidden = true; $('r-rank').textContent = '순위를 확인하는 중…';
+  try {
+    const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'submit', grade: S.g, count: S.c, score: S.score, correct, secs: Math.round(secs), device: deviceId() }) });
+    const d = await r.json(); if (!r.ok) throw d;
+    S.myId = { id: d.id, token: d.token };
+    $('r-rank').textContent = d.rank <= 5 ? `고${S.g} ${S.c}문장에서 전체 ${d.total}개 기록 중 ${d.rank}등! 이름을 남겨 랭킹에 올려 보세요.` : `전체 ${d.total}개 기록 중 ${d.rank}등이에요. 5등 안에 들면 랭킹에 이름을 올릴 수 있어요.`;
+    $('namef').hidden = d.rank > 5;
+  } catch (e) { $('r-rank').textContent = '랭킹 서버에 연결하지 못해 이번 기록은 이 기기에만 저장했어요.'; }
+  await loadBoards();
+}
+$('namef').onsubmit = async (e) => {
+  e.preventDefault(); const name = $('name').value.trim(); if (!name || !S.myId) return;
+  const btn = $('namef').querySelector('button'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'name', grade: S.g, count: S.c, name, id: S.myId.id, token: S.myId.token }) });
+    const d = await r.json();
+    if (r.ok) { S.boards = d.boards; renderBoard($('board2')); renderBoard($('board')); $('namef').hidden = true; $('r-rank').textContent = `'${name}' 이름으로 랭킹에 올렸어요.`; }
+    else $('r-rank').textContent = d.error === 'not_top' ? '그 사이 다른 친구들의 기록에 밀려 5등 밖으로 나갔어요.' : d.error === 'bad_name' ? '이름은 한글, 영어, 숫자로 적어 주세요.' : '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.';
+  } catch (x) { $('r-rank').textContent = '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.'; }
+  btn.disabled = false;
+};
+$('again').onclick = start;
+$('home').onclick = () => { $('result').hidden = true; $('setup').hidden = false; setupInfo(); window.scrollTo({ top: 0 }); };
+$('start').onclick = start;
+setupInfo(); loadBoards();
+</script>
+</body></html>
