@@ -147,7 +147,8 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
 .review li { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px }
 .review li.wrong { border-color: var(--bad); background: var(--bad-bg) }
 .review .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px }
-.foot { border-top: 1px solid var(--line); padding-top: 18px; display: flex; justify-content: flex-end; font-size: 13px }
+.foot { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; font-size: 13px; color: var(--muted) }
+.foot p { font-family: var(--soft); font-size: 14px; color: var(--ink) }
 .foot a { color: var(--navy); font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 8px 16px; display: inline-flex; gap: 6px; align-items: center }
 .foot a:hover { border-color: var(--blue) }
 @media (max-width: 480px) { .top h1 { font-size: 32px } .sent { font-size: 19px } .pattern .name { font-size: 20px } }
@@ -270,6 +271,7 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
   </section>
 
   <footer class="foot">
+    <p>독해가 곧 영어다</p>
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
