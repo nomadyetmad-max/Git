@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 4000, messages: [{ role: 'user', content: buildPromptFor(clean, level, t, gtype, false) }] })
+      body: JSON.stringify({ model: MODEL, max_tokens: 4000, temperature: 0, messages: [{ role: 'user', content: buildPromptFor(clean, level, t, gtype, false) }] })
     });
     const data = await r.json().catch(() => null);
     if (!r.ok) {
