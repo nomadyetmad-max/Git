@@ -1,16 +1,16 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="문장 속 비필수 문장성분(수식어)과 그 수식 대상을 드래그로 찾는 구문 분석 훈련. 고1·고2·고3 모의고사 수준.">
-<title>문장성분 Drill</title>
+<title>Reading Drill</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
-/* Layout: the same ivory notebook as Writing Clinic. One sentence sits on a ruled strip like an exam line; the student drags over words with two pens:
+/* Layout: a sister site to Writing Clinic: the same ivory paper, but teal ink so it reads as the reading side. One sentence sits on a ruled strip like an exam line; the student drags over words with two pens:
    amber for the modifier (it gets parentheses), green for the word it modifies (it gets an underline). A thin timer rail runs above the sentence. */
 :root {
   --bg: #f6f2e7; --paper: #fffdf6; --ink: #24312a; --muted: #6c7369; --line: #e3dccb;
-  --navy: #2f5d46; --blue: #5b8f6f; --band: #edf0e2; --leaf: #dfe9d6; --on-navy: #fffdf6;
+  --navy: #1f5f63; --blue: #4d8a8c; --band: #e8efe9; --leaf: #dceae7; --on-navy: #fffdf6;
   --mod: #a8641c; --mod-bg: #f7e6c4; --tgt: #2f6b48; --tgt-bg: #d7ead9;
-  --bad: #b44a37; --bad-bg: #f8e6df; --ok: #3d7a4f; --rule: #ece5d4; --shadow: rgba(47, 93, 70, .07);
+  --bad: #b44a37; --bad-bg: #f8e6df; --ok: #3d7a4f; --rule: #ece5d4; --shadow: rgba(31, 95, 99, .07);
   --sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
   --soft: 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', serif;
@@ -18,12 +18,12 @@
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
-  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --leaf: #26372d; --on-navy: #151b17;
+  --navy: #9fd0d2; --blue: #7fb1b3; --band: #1f2d2c; --leaf: #213634; --on-navy: #151b17;
   --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
   --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
-  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --leaf: #26372d; --on-navy: #151b17;
+  --navy: #9fd0d2; --blue: #7fb1b3; --band: #1f2d2c; --leaf: #213634; --on-navy: #151b17;
   --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
   --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark }
 
@@ -44,6 +44,7 @@ button, input { font: inherit; color: inherit }
 .tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
 .top { display: flex; flex-direction: column; gap: 8px }
 .top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; color: var(--navy) }
+.brand { font-size: 12.5px; font-weight: 700; letter-spacing: .16em; color: var(--blue) }
 .top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); margin-top: 6px }
 .top p { font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
 
@@ -146,9 +147,9 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
 </style>
 </head><body>
 <div class="wrap">
-  <nav class="tabs" aria-label="메뉴"><a href="/">글쓰기</a><a href="/stats">통계</a><a href="/drill" aria-current="page">문장성분 Drill</a></nav>
-  <header class="top">
-    <h1>문장성분 Drill<small>비필수 문장성분(수식어) 찾기 훈련</small></h1>
+    <header class="top">
+    <p class="brand">화전 우등생 학원 · READING</p>
+    <h1>Reading Drill<small>비필수 문장성분(수식어) 찾기 훈련</small></h1>
     <p>모의고사에서 주어지는 시간은 한 문장에 약 10초예요. 문제마다 주어지는 패턴을 보고, 문장 속 수식어와 그것이 꾸미는 대상을 손가락이나 마우스로 쓱 드래그해서 찾아보세요.</p>
   </header>
 
@@ -245,7 +246,7 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
     <div class="col"><div class="card"><h2 id="board2-title">랭킹 TOP 5</h2><ol class="board" id="board2"></ol></div></div>
   </section>
 
-  <p class="foot">화전 우등생 학원 · <a href="/">Writing Clinic</a></p>
+  <p class="foot">화전 우등생 학원 · 영어 글쓰기 연습은 <a href="/" target="_blank" rel="noopener">Writing Clinic ↗</a></p>
 </div>
 <script src="/drill-data.js"></script>
 <script>

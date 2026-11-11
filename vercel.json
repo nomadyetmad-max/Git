@@ -10,5 +10,11 @@
     "api/drill.js": {
       "maxDuration": 20
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/reading",
+      "destination": "/drill.html"
+    }
+  ]
 }

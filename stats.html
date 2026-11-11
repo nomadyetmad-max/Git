@@ -31,6 +31,12 @@ h1, h2, h3, p { margin: 0 }
 button, input { font: inherit; color: inherit }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
 .wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px }
+.navrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px }
+.out { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 700; font-size: 14px; color: #1f5f63; background: #e2eeec; border: 1px solid #c9dcd8; border-radius: 99px; padding: 8px 16px; white-space: nowrap }
+.out:hover { background: #d4e7e4 }
+.out small { font-weight: 500; color: #4d7d80 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .out { color: #9fd0d2; background: #1a3132; border-color: #284647 } :root:not([data-theme="light"]) .out small { color: #7fb1b3 } }
+:root[data-theme="dark"] .out { color: #9fd0d2; background: #1a3132; border-color: #284647 } :root[data-theme="dark"] .out small { color: #7fb1b3 }
 .tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
 .tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 22px; border-radius: 99px; white-space: nowrap }
 .tabs a:hover { color: var(--navy) }
@@ -133,7 +139,7 @@ tr:last-child td { border-bottom: 0 }
 </head>
 <body>
 <div class="wrap">
-  <nav class="tabs" aria-label="메뉴"><a href="/">글쓰기</a><a href="/stats" aria-current="page">통계</a><a href="/drill">문장성분 Drill</a></nav>
+  <div class="navrow"><nav class="tabs" aria-label="메뉴"><a href="/">글쓰기</a><a href="/stats" aria-current="page">통계</a></nav><a class="out" href="/reading" target="_blank" rel="noopener">Reading Drill <small>문장성분 찾기 · 새 창 ↗</small></a></div>
   <header class="top">
     <h1>우리의 글쓰기 통계</h1>
     <p>Writing Clinic에서 받은 첨삭을 모아 만든 통계예요. 친구들이 어떤 주제로 쓰고, 어디에서 많이 틀리는지 볼 수 있어요. 이름과 글 내용은 보이지 않아요.</p>
