@@ -38,6 +38,8 @@ button, input, select, textarea { font: inherit; color: inherit }
 .top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; letter-spacing: -.01em; color: var(--navy) }
 .top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); letter-spacing: 0; margin-top: 6px }
 .top p { color: var(--ink); font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
+.count { display: block; width: fit-content; max-width: 100%; line-height: 1.6; background: var(--leaf); color: var(--navy); border-radius: 14px; padding: 6px 14px; font-family: var(--soft); font-size: 14.5px }
+.count b { font-family: var(--serif); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; padding: 0 2px }
 .lead { font-family: var(--soft); font-size: 14.5px; line-height: 1.8; color: var(--muted); max-width: 64ch; text-wrap: pretty }
 
 .step { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0 }
@@ -196,6 +198,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
 
 <div class="wrap">
   <div class="top">
+    <p class="count" id="count" hidden>지금까지 <b id="count-n">0</b>개의 글이 Writing Clinic을 받았어요</p>
     <h1>Writing Clinic<small>천천히, 한 단락씩 쓰는 영어 글쓰기 연습장</small></h1>
     <p>오늘은 영어로 한 단락만 써 봐요. 처음부터 완벽할 필요는 없어요. 쓰고 나서 고칠 곳을 하나씩 찾아가는 것, 그게 이 연습장의 목적이에요.</p>
   </div>
@@ -791,9 +794,15 @@ async function evaluateApi(text, st) {
     st.className = 'note warn'; st.textContent = e && e.name === 'AbortError' ? '중단했습니다.' : '첨삭 서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.';
   } finally { setBusy(false); state.ctl = null; }
 }
+async function loadCount() {
+  try {
+    const r = await fetch('api/stats', { cache: 'no-store' }); const d = r.ok ? await r.json() : null;
+    if (d && d.total > 0) { $('count-n').textContent = Number(d.total).toLocaleString('ko-KR'); $('count').hidden = false; }
+  } catch (e) { /* 숫자를 못 불러오면 문구를 숨긴 채로 둡니다 */ }
+}
 async function apiReady() {
   if (location.protocol !== 'https:' && location.protocol !== 'http:') return null;
-  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('stats-link').hidden = false; } return d && d.ready ? 'api' : null; } catch (e) { return null; }
+  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('stats-link').hidden = false; loadCount(); } return d && d.ready ? 'api' : null; } catch (e) { return null; }
 }
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 
