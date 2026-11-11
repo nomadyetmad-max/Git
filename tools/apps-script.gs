@@ -39,7 +39,7 @@ function doPost(e) {
 // 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
 function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return out({ ok: Boolean(ss), version: 3, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
+  return out({ ok: Boolean(ss), version: 4, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
@@ -58,7 +58,7 @@ function stats(detail) {
   const now = new Date(Date.now() + 9 * 3600e3), today = now.toISOString().slice(0, 10);
   const day = (n) => new Date(now.getTime() - n * 864e5).toISOString().slice(0, 10);
   const weekFrom = day(6), days = []; for (let i = 13; i >= 0; i--) days.push({ date: day(i), count: 0 });
-  const LV = ['Basic', 'Intermediate', 'Advanced'], lv = {}; LV.forEach((k) => (lv[k] = { count: 0, g: 0, s: 0, n: 0 }));
+  const LV = ['Basic', 'Intermediate', 'Advanced'], lv = {}; LV.forEach((k) => (lv[k] = { count: 0, g: 0, s: 0, n: 0, errs: {} }));
   const topics = {}, types = {}, errs = {}, weak = {}, people = {}, recent = [];
   let total = 0, todayN = 0, weekN = 0;
   const add = (o, k, n) => { if (k) o[k] = (o[k] || 0) + (n || 1); };
@@ -71,7 +71,7 @@ function stats(detail) {
     if (lv[level]) { lv[level].count++; const G = Number(g), S = Number(st); if (G && S) { lv[level].g += G; lv[level].s += S; lv[level].n++; } }
     add(topics, String(topic).replace(/\s*\(.*\)$/, '')); add(types, String(type).replace(/^자동:\s*/, '') || '미정');
     const groups = [];
-    String(errors).split(',').map((x) => x.trim()).filter(Boolean).forEach((x) => { const m = x.match(/×\s*(\d+)$/); const k = errGroup(x.replace(/×\s*\d+$/, '').trim()); add(errs, k, m ? Number(m[1]) : 1); groups.push(k); });
+    String(errors).split(',').map((x) => x.trim()).filter(Boolean).forEach((x) => { const m = x.match(/×\s*(\d+)$/); const k = errGroup(x.replace(/×\s*\d+$/, '').trim()); add(errs, k, m ? Number(m[1]) : 1); if (lv[level]) add(lv[level].errs, k, m ? Number(m[1]) : 1); groups.push(k); });
     String(weakItems).split(',').map((x) => x.trim()).filter(Boolean).forEach((x) => add(weak, x));
     if (detail) {
       const who = String(name).trim() || '(이름 없음)';
@@ -83,7 +83,7 @@ function stats(detail) {
   const top = (o, n) => Object.keys(o).map((k) => ({ name: k, count: o[k] })).sort((a, b) => b.count - a.count).slice(0, n);
   const avg = (x, k) => (x.n ? Math.round((x[k] / x.n) * 10) / 10 : null);
   const res = { updated: now.toISOString().slice(0, 16).replace('T', ' '), total, today: todayN, week: weekN, days,
-    levels: LV.map((k) => ({ name: k, count: lv[k].count, grammar: avg(lv[k], 'g'), structure: avg(lv[k], 's') })),
+    levels: LV.map((k) => ({ name: k, count: lv[k].count, grammar: avg(lv[k], 'g'), structure: avg(lv[k], 's'), errors: top(lv[k].errs, 3) })),
     topics: top(topics, 8), types: top(types, 6), errors: top(errs, 8), weak: top(weak, 8) };
   if (detail) {
     res.students = Object.keys(people).map((k) => { const p = people[k]; return { name: p.name, count: p.count, grammar: avg(p, 'g'), structure: avg(p, 's'), errors: top(p.errs, 3).map((e) => e.name), last: p.last }; }).sort((a, b) => b.count - a.count);

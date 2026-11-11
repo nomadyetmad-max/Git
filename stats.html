@@ -73,6 +73,22 @@ button, input { font: inherit; color: inherit }
 .cols .c .n { position: absolute; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums }
 .xlab { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums }
 
+/* level top 3 */
+.lvtop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px }
+.lvcol { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.lvcol h3 { font-family: var(--serif); font-weight: 500; font-size: 19px; color: var(--navy); display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.lvcol h3 small { font-family: var(--sans); font-size: 12px; color: var(--muted) }
+.lvcol ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px }
+.lvcol li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 14px }
+.lvcol .rk { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--leaf); color: var(--navy); font-family: var(--serif); font-weight: 600; font-size: 13px }
+.lvcol li:first-child .rk { background: var(--navy); color: var(--on-navy) }
+.lvcol .nm2 { display: flex; flex-direction: column; gap: 3px; min-width: 0 }
+.lvcol .nm2 span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.lvcol .nm2 i { display: block; height: 6px; border-radius: 99px; background: var(--bar) }
+.lvcol .ct { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums }
+.lvcol .none { font-size: 13px; color: var(--muted) }
+@media (max-width: 760px) { .lvtop { grid-template-columns: minmax(0, 1fr) } }
+
 /* score pairs */
 .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted) }
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px }
@@ -129,6 +145,7 @@ tr:last-child td { border-bottom: 0 }
   <div class="grid" id="charts">
     <section class="card"><h2>많이 나온 문법 오류</h2><p class="lead">첨삭에서 지적된 횟수예요. 위에 있는 오류부터 조심해 보세요.</p><div id="c-errors"></div></section>
     <section class="card"><h2>보완이 많이 필요한 구조 항목</h2><p class="lead">‘보완 필요’ 판정을 받은 횟수예요.</p><div id="c-weak"></div></section>
+    <section class="card wide" id="lvtop-card" hidden><h2>레벨별 자주 나오는 오류 TOP 3</h2><p class="lead">내 레벨에서 친구들이 가장 많이 틀린 곳이에요. 글을 쓰고 나서 이 세 가지부터 점검해 보세요.</p><div id="c-lvtop"></div></section>
     <section class="card wide"><h2>레벨별 평균 점수</h2><p class="lead">5점 만점이에요. 레벨마다 보는 기준이 달라서, 레벨끼리 점수를 비교하기보다 내 레벨의 평균과 비교해 보세요.</p><div id="c-scores"></div></section>
     <section class="card"><h2>레벨별 이용</h2><div id="c-levels"></div></section>
     <section class="card"><h2>글의 종류</h2><div id="c-types"></div></section>
@@ -172,6 +189,18 @@ function hbars(list, unit, total) {
     h('span', { class: 'track' }, h('span', { class: 'fill', style: 'width:' + (x.count / max * 100) + '%' })),
     h('span', { class: 'val', text: fmt(x.count) + unit + (total ? ' · ' + Math.round(x.count / total * 100) + '%' : '') })])));
 }
+function lvtop(levels) {
+  return h('div', { class: 'lvtop' }, levels.map((l) => {
+    const list = l.errors || [], max = Math.max(1, ...list.map((e) => e.count));
+    return h('section', { class: 'lvcol', 'aria-label': l.name + ' 자주 나오는 오류' }, [
+      h('h3', {}, [l.name, h('small', { text: fmt(l.count) + '회 첨삭' })]),
+      list.length ? h('ol', {}, list.map((e, i) => h('li', { title: e.name + ': ' + fmt(e.count) + '회' }, [
+        h('span', { class: 'rk', text: String(i + 1) }),
+        h('span', { class: 'nm2' }, [h('span', { text: e.name }), h('i', { style: 'width:' + (e.count / max * 100) + '%' })]),
+        h('span', { class: 'ct', text: fmt(e.count) + '회' })])))
+        : h('p', { class: 'none', text: l.count ? '지적된 오류가 아직 없어요.' : '아직 기록이 없어요.' })]);
+  }));
+}
 function scores(levels) {
   const has = levels.filter((l) => l.count && l.grammar != null);
   if (!has.length) return h('p', { class: 'empty', text: '아직 기록이 없어요.' });
@@ -189,6 +218,7 @@ function render(s) {
   $('c-errors').replaceChildren(hbars(s.errors, '회'));
   $('c-weak').replaceChildren(hbars(s.weak, '회'));
   $('c-scores').replaceChildren(scores(s.levels));
+  if (s.levels.some((l) => Array.isArray(l.errors))) { $('lvtop-card').hidden = false; $('c-lvtop').replaceChildren(lvtop(s.levels)); }
   $('c-levels').replaceChildren(hbars(s.levels.map((l) => ({ name: l.name, count: l.count })).filter((l) => l.count), '회', s.total));
   $('c-types').replaceChildren(hbars(s.types, '회', s.total));
   $('c-topics').replaceChildren(hbars(s.topics, '회'));
