@@ -22,6 +22,8 @@
 | `IP_HOURLY_LIMIT` | 같은 인터넷 주소(학원 와이파이 등)당 1시간 첨삭 횟수 | `60` |
 | `DAILY_LIMIT` | 사이트 전체 하루 첨삭 횟수 | `300` |
 | `LOG_URL` | 첨삭 기록을 받을 구글 Apps Script 웹 앱 주소 (`tools/apps-script.gs`) | 없음 (기록 안 함) |
+| `USER_DAILY_LIMIT` | 한 사용자(기기)당 하루 첨삭 횟수 | `3` |
+| `UNLOCK_PASSWORD` | 횟수 제한을 푸는 비밀번호 (입력한 기기는 무제한) | 없음 |
 | `STATS_PASSWORD` | 통계 화면(/stats)의 선생님 전용 비밀번호 | 없음 |
 | `LOG_SECRET` | Apps Script의 `SECRET`과 같은 값 | 없음 |
 

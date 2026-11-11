@@ -15,6 +15,15 @@ function doPost(e) {
     const hit = sh.getRange('A:A').createTextFinder(String(d.key)).matchEntireCell(true).findNext();
     return out({ ok: true, result: hit ? sh.getRange(hit.getRow(), 3).getValue() : null });
   }
+  if (d && d.action === 'quota') {
+    if (String(d.auth).trim() !== SECRET.trim()) return out({ ok: false, reason: 'secret' });
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET);
+    if (!sh || sh.getLastRow() < 2 || !d.device) return out({ ok: true, used: 0 });
+    const n = sh.getLastRow() - 1, from = Math.max(2, sh.getLastRow() - 3000 + 1);   // 최근 3,000줄만 확인 (빠르게)
+    const times = sh.getRange(from, 1, sh.getLastRow() - from + 1, 1).getDisplayValues(), devs = sh.getRange(from, 13, sh.getLastRow() - from + 1, 1).getDisplayValues();
+    let used = 0; for (let i = 0; i < times.length; i++) if (String(times[i][0]).slice(0, 10) === d.date && String(devs[i][0]) === String(d.device)) used++;
+    return out({ ok: true, used });
+  }
   if (d && d.action === 'stats') {
     if (String(d.auth).trim() !== SECRET.trim()) return out({ ok: false, reason: 'secret' });
     return out({ ok: true, stats: stats(Boolean(d.detail)) });
@@ -39,7 +48,7 @@ function doPost(e) {
 // 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
 function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return out({ ok: Boolean(ss), version: 4, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
+  return out({ ok: Boolean(ss), version: 5, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 

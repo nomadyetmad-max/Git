@@ -26,6 +26,7 @@
   --hl: #5d5320; --hl-ink: #fbf0c4; --ok: #93d3a4; --mid: #dfbd6a; --rule: #28322c; --leaf: #26372d; --shadow: rgba(0, 0, 0, .25); color-scheme: dark }
 
 * { box-sizing: border-box }
+[hidden] { display: none !important }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; word-break: keep-all }
 .wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -171,6 +172,16 @@ details.teacher textarea { width: 100%; min-height: 110px; border: 1px solid var
 details.orig summary { cursor: pointer; font-size: 13.5px; color: var(--muted); width: fit-content }
 details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
 
+/* daily limit */
+.quota { font-size: 13px; color: var(--navy); background: var(--band); border-radius: 99px; padding: 4px 12px; font-variant-numeric: tabular-nums }
+.quota.out { color: var(--pen) }
+.lockbox { border: 1.5px solid var(--navy); background: var(--sel); border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px }
+.lockbox .lk-t { font-family: var(--soft); font-size: 17px; font-weight: 700; color: var(--navy) }
+.lockbox .lk-d { font-size: 13.5px; line-height: 1.7 }
+.lockbox form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.lockbox input { border: 1px solid var(--line); border-radius: 99px; background: var(--paper); padding: 8px 14px; font-size: 14px; flex: 1 1 180px; min-width: 0; color: var(--ink) }
+#write.locked textarea#text { opacity: .55; cursor: not-allowed }
+
 /* topic picker */
 .pick { border-top: 1px dashed var(--line); padding-top: 12px }
 .pick summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--navy); width: fit-content }
@@ -236,9 +247,19 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
         </details>
       </section>
 
-      <section class="step" aria-labelledby="h-write">
+      <section class="step" id="write" aria-labelledby="h-write">
         <header><span class="no">3</span><h2 id="h-write">글쓰기</h2><span class="sub" id="guide"></span></header>
         <p class="lead">먼저 어떤 종류의 글을 쓸지 골라 보세요. 첨삭도 그 종류에 맞춰 이루어져요. 첫 문장에 하고 싶은 말을 먼저 쓰고, 이유나 예시를 차례로 이어 보세요. 단어가 막히면 옆의 단어 힌트를 눌러도 돼요. 쓰던 글은 이 기기에 자동으로 저장돼요.</p>
+        <div class="lockbox" id="lockbox" hidden>
+          <p class="lk-t">오늘의 첨삭 <b id="lk-limit">3</b>회를 모두 사용했어요.</p>
+          <p class="lk-d">첨삭 횟수는 내일 다시 채워져요. 쓴 글은 그대로 저장되어 있으니 내일 이어서 써도 좋아요. 선생님께 받은 비밀번호가 있다면 입력해서 계속 사용할 수 있어요.</p>
+          <form id="unlock-form" autocomplete="off">
+            <label for="unlock-pw" class="note">비밀번호</label>
+            <input id="unlock-pw" type="password">
+            <button class="btn primary" type="submit">잠금 풀기</button>
+            <span class="note" id="unlock-status" role="status"></span>
+          </form>
+        </div>
         <div class="fields">
           <label for="name">이름 (선택 · 반·번호나 별명도 좋아요)<input id="name" type="text" maxlength="20" autocomplete="off"></label>
           <label for="gtype" id="gtype-wrap">글의 종류
@@ -257,6 +278,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
           <button class="btn primary" id="btn-eval" type="button">첨삭 받기</button>
           <button class="btn" id="btn-stop" type="button" hidden>중단</button>
           <button class="btn" id="btn-copy-sub" type="button">제출용으로 복사</button>
+          <span class="quota" id="quota" hidden></span>
           <span class="note" id="status" role="status"></span>
         </div>
         <p class="note privacy" id="privacy" hidden>첨삭을 받으면 쓴 글, 이름 칸에 적은 내용, 레벨·주제와 첨삭 결과가 수업에 활용하기 위해 선생님께 저장돼요.</p>
@@ -754,7 +776,7 @@ const COPY = {
 };
 const HIDE = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
 function setBusy(on) {
-  state.busy = on; $('btn-eval').disabled = on; $('btn-stop').hidden = !on;
+  state.busy = on; $('btn-eval').disabled = on || $('write').classList.contains('locked'); $('btn-stop').hidden = !on;
   $('btn-eval').textContent = on ? '첨삭 중…' : '첨삭 받기';
 }
 function goOffline() { if (!window.claude) $('offline').replaceChildren('AI 첨삭 기능은 준비 중이에요. 지금은 ', h('b', { text: '제출용으로 복사' }), '를 눌러 글을 선생님께 보내 주세요. 선생님이 같은 기준으로 첨삭해 줍니다.'); $('offline').hidden = false; $('btn-eval').hidden = true; $('btn-copy-sub').classList.add('primary'); }
@@ -787,11 +809,13 @@ async function evaluateApi(text, st) {
   const L = LEVELS[state.level], meta = { text, levelName: L.name, topic: cur().en, name: $('name').value.trim(), gScope: SCOPE[state.level][0], sScope: SCOPE[state.level][1] };
   state.ctl = new AbortController();
   try {
-    const res = await fetch('api/evaluate', { method: 'POST', headers: { 'content-type': 'application/json' }, signal: state.ctl.signal,
+    const res = await fetch('api/evaluate', { method: 'POST', headers: { 'content-type': 'application/json', 'x-wc-pass': passToken() }, signal: state.ctl.signal,
       body: JSON.stringify({ level: state.level, topic: cur().en, type: $('gtype').value, text, name: $('name').value.trim().slice(0, 20), device: deviceId() }) });
     const data = await res.json().catch(() => null);
+    if (data && data.error === 'daily_limit') { st.textContent = ''; setQuota({ used: data.used, limit: data.limit, unlimited: false }); return; }
     if (!res.ok || !data || data.error) { st.className = 'note warn'; st.textContent = API_COPY[data && data.error] || '첨삭 결과를 받지 못했습니다. 다시 눌러 주세요.'; return; }
     if (data.valid === false) { st.className = 'note warn'; st.textContent = str(data.reason) || '이 글은 첨삭할 수 없습니다.'; return; }
+    if (state.quota && !state.quota.unlimited) setQuota(Object.assign({}, state.quota, { used: state.quota.used + 1 }));
     renderResult(data, meta); st.textContent = '첨삭이 끝났습니다.';
     $('result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } catch (e) {
@@ -804,9 +828,36 @@ async function loadCount() {
     if (d && d.total > 0) { $('count-n').textContent = Number(d.total).toLocaleString('ko-KR'); $('count').hidden = false; }
   } catch (e) { /* 숫자를 못 불러오면 문구를 숨긴 채로 둡니다 */ }
 }
+function passToken() { return store('pass') || ''; }
+function setQuota(q) {
+  state.quota = { used: Number(q.used) || 0, limit: Number(q.limit) || 3, unlimited: Boolean(q.unlimited), unlockable: q.unlockable !== false };
+  const el = $('quota'), left = Math.max(0, state.quota.limit - state.quota.used), locked = !state.quota.unlimited && left === 0;
+  el.hidden = false; el.classList.toggle('out', locked);
+  el.textContent = state.quota.unlimited ? '횟수 제한 없음' : '오늘 남은 첨삭 ' + left + ' / ' + state.quota.limit + '회';
+  $('lk-limit').textContent = String(state.quota.limit);
+  $('lockbox').hidden = !locked; $('unlock-form').hidden = !state.quota.unlockable;
+  $('write').classList.toggle('locked', locked);
+  $('text').readOnly = locked; $('btn-eval').disabled = locked || state.busy;
+}
+async function unlock(e) {
+  e.preventDefault(); const st = $('unlock-status'); st.className = 'note'; st.textContent = '확인하는 중…';
+  try {
+    const r = await fetch('api/evaluate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'unlock', password: $('unlock-pw').value }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.token) { st.className = 'note warn'; st.textContent = { wrong_password: '비밀번호가 맞지 않아요.', too_many: '잘못 넣은 횟수가 많아요. 1시간 뒤에 다시 시도해 주세요.', no_password: '아직 비밀번호가 설정되지 않았어요.' }[d.error] || '확인하지 못했어요. 다시 시도해 주세요.'; return; }
+    store('pass', d.token); $('unlock-pw').value = ''; st.textContent = '';
+    setQuota({ used: 0, limit: state.quota ? state.quota.limit : 3, unlimited: true });
+    $('status').className = 'note'; $('status').textContent = '잠금이 풀렸어요. 이 기기에서는 횟수 제한 없이 쓸 수 있어요.';
+  } catch (err) { st.className = 'note warn'; st.textContent = '확인하지 못했어요. 다시 시도해 주세요.'; }
+}
 async function apiReady() {
   if (location.protocol !== 'https:' && location.protocol !== 'http:') return null;
-  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('tabs').hidden = false; loadCount(); } return d && d.ready ? 'api' : null; } catch (e) { return null; }
+  try {
+    const r = await fetch('api/evaluate?device=' + deviceId(), { method: 'GET', headers: { 'x-wc-pass': passToken() } }); const d = r.ok ? await r.json() : null;
+    if (d && d.logging) { $('privacy').hidden = false; $('tabs').hidden = false; loadCount(); }
+    if (d && d.ready && typeof d.used === 'number') setQuota(d);
+    return d && d.ready ? 'api' : null;
+  } catch (e) { return null; }
 }
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 
@@ -833,6 +884,7 @@ function start() {
     copy(submission(), st);
   };
   $('btn-import').onclick = importSubmission;
+  $('unlock-form').addEventListener('submit', unlock);
   state.sample.then((s) => { if (!s) goOffline(); });
 }
 start();
