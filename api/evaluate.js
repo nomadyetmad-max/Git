@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
   if (clean.length > 3000) return res.status(413).json({ error: 'too_long' });
   if (clean.split(/\s+/).length < 10) return res.status(400).json({ error: 'bad_request' });
   const types = ['', '주장하는 글', '설명하는 글', '비교·대조하는 글', '문제와 해결을 다루는 글', '경험을 전하는 글'];
-  const gtype = level === 'A' && types.includes(type) ? type : '';
+  const gtype = types.includes(type) ? type : '';
 
   const device = /^[a-z0-9]{8,40}$/.test(String(body.device || '')) ? body.device : 'ip-' + ipOf(req);
   const blocked = allow(ipOf(req), device);
