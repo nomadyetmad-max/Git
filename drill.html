@@ -1,5 +1,5 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="문장 속 비필수 문장성분(수식어)과 그 수식 대상을 드래그로 찾는 구문 분석 훈련. 고1·고2·고3 모의고사 수준.">
-<title>Reading Drill</title>
+<title>Reading Clinic</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
@@ -44,6 +44,11 @@ button, input { font: inherit; color: inherit }
 .tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
 .top { display: flex; flex-direction: column; gap: 8px }
 .top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; color: var(--navy) }
+.out { display: inline-flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; text-decoration: none; font-weight: 700; font-size: 14px; color: #2f5d46; background: #e7efdf; border: 1px solid #d3e0c9; border-radius: 99px; padding: 8px 16px; white-space: nowrap; margin-bottom: 8px }
+.out:hover { background: #dce8d2 }
+.out small { font-weight: 500; color: #5b8f6f }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root:not([data-theme="light"]) .out small { color: #86b597 } }
+:root[data-theme="dark"] .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root[data-theme="dark"] .out small { color: #86b597 }
 .brand { font-size: 12.5px; font-weight: 700; letter-spacing: .16em; color: var(--blue) }
 .top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); margin-top: 6px }
 .top p { font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
@@ -148,8 +153,9 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
 </head><body>
 <div class="wrap">
     <header class="top">
+    <a class="out" href="/" target="_blank" rel="noopener">Writing Clinic <small>영어 글쓰기 첨삭 · 새 창 ↗</small></a>
     <p class="brand">화전 우등생 학원 · READING</p>
-    <h1>Reading Drill<small>비필수 문장성분(수식어) 찾기 훈련</small></h1>
+    <h1>Reading Clinic<small>비필수 문장성분(수식어) 찾기 훈련</small></h1>
     <p>모의고사에서 주어지는 시간은 한 문장에 약 10초예요. 문제마다 주어지는 패턴을 보고, 문장 속 수식어와 그것이 꾸미는 대상을 손가락이나 마우스로 쓱 드래그해서 찾아보세요.</p>
   </header>
 
