@@ -1,0 +1,494 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="문장 속 필수 문장성분(주어, 동사, 목적어, 보어)을 드래그로 찾는 구문 분석 훈련. 고1·고2·고3 모의고사 수준.">
+<title>Reading Clinic · 문장성분</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: a sister site to Writing Clinic: the same ivory paper, but teal ink so it reads as the reading side. One sentence sits on a ruled strip like an exam line; the student drags over words with two pens:
+   amber for the modifier (it gets parentheses), green for the word it modifies (it gets an underline). A thin timer rail runs above the sentence. */
+:root {
+  --bg: #f6f2e7; --paper: #fffdf6; --ink: #24312a; --muted: #6c7369; --line: #e3dccb;
+  --navy: #1f5f63; --blue: #4d8a8c; --band: #e8efe9; --leaf: #dceae7; --on-navy: #fffdf6;
+  --mod: #a8641c; --mod-bg: #f7e6c4; --tgt: #2f6b48; --tgt-bg: #d7ead9;
+  --bad: #b44a37; --bad-bg: #f8e6df; --ok: #3d7a4f; --rule: #ece5d4; --shadow: rgba(31, 95, 99, .07);
+  --sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --soft: 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', serif;
+  --eng: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
+  --navy: #9fd0d2; --blue: #7fb1b3; --band: #1f2d2c; --leaf: #213634; --on-navy: #151b17;
+  --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
+  --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
+  --navy: #9fd0d2; --blue: #7fb1b3; --band: #1f2d2c; --leaf: #213634; --on-navy: #151b17;
+  --mod: #e7b56f; --mod-bg: #3f3220; --tgt: #9fd3ad; --tgt-bg: #213a2b;
+  --bad: #ec9c8a; --bad-bg: #3b2621; --ok: #93d3a4; --rule: #28322c; --shadow: rgba(0, 0, 0, .25); color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body.playing .top p { display: none }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; word-break: keep-all }
+.wrap { max-width: 960px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px }
+h1, h2, h3, p { margin: 0 }
+button, input { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+.tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px; overflow-x: auto }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 20px; border-radius: 99px; white-space: nowrap }
+.tabs a:hover { color: var(--navy) }
+.tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
+.top { display: flex; flex-direction: column; gap: 8px }
+.top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; color: var(--navy) }
+.out { display: inline-flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; text-decoration: none; font-weight: 700; font-size: 14px; color: #2f5d46; background: #e7efdf; border: 1px solid #d3e0c9; border-radius: 99px; padding: 8px 16px; white-space: nowrap; margin-bottom: 8px }
+.out:hover { background: #dce8d2 }
+.out small { font-weight: 500; color: #5b8f6f }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root:not([data-theme="light"]) .out small { color: #86b597 } }
+:root[data-theme="dark"] .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root[data-theme="dark"] .out small { color: #86b597 }
+.navrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px }
+.navrow .out { margin-bottom: 0 }
+.brand { font-size: 12.5px; font-weight: 700; letter-spacing: .16em; color: var(--blue) }
+.top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); margin-top: 6px }
+.top p { font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
+
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.card > h2 { font-family: var(--soft); font-size: 19px; font-weight: 700; color: var(--navy) }
+.card .sub { color: var(--muted); font-size: 13.5px }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0 }
+
+.field { display: flex; flex-direction: column; gap: 8px }
+.field > span { font-weight: 700; font-size: 14px; color: var(--muted) }
+.chips { display: flex; flex-wrap: wrap; gap: 8px }
+.chips button { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 8px 18px; font-weight: 700; cursor: pointer; color: var(--muted) }
+.chips button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--on-navy) }
+.btn { border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 700; cursor: pointer; background: var(--navy); color: var(--on-navy); font-size: 16px }
+.btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--line) }
+.btn:disabled { opacity: .45; cursor: default }
+.rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px }
+.rules b { color: var(--navy) }
+.pts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px }
+.pts b { font-family: var(--serif); font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums; text-align: right }
+details.crit { border-top: 1px solid var(--rule); padding-top: 10px }
+details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
+.crit-body { display: flex; flex-direction: column; gap: 10px; font-size: 14px; margin-top: 10px }
+.crit-body h3 { font-size: 14px; color: var(--muted) }
+.crit-body ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px }
+.m { background: var(--mod-bg); color: var(--mod); border-radius: 4px; padding: 0 4px; font-weight: 700 }
+.t { background: var(--tgt-bg); color: var(--tgt); border-radius: 4px; padding: 0 4px; font-weight: 700 }
+
+.board { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none }
+.board li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 12px; border-radius: 10px; background: var(--band) }
+.board li .r { font-family: var(--serif); font-weight: 600; color: var(--navy) }
+.board li .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.board li .n.none { color: var(--muted) }
+.board li .s { font-family: var(--serif); font-weight: 600; font-variant-numeric: tabular-nums }
+.board li.me { outline: 2px solid var(--blue) }
+.board .empty { background: none; color: var(--muted); display: block; padding: 4px 0 }
+.best { font-size: 13.5px; color: var(--muted) }
+
+/* game */
+.hud { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between }
+.hud .q { font-weight: 700; color: var(--muted) }
+.hud .q b { font-family: var(--serif); color: var(--navy); font-size: 22px }
+.hud .sc { font-family: var(--serif); font-weight: 600; font-size: 28px; color: var(--navy); font-variant-numeric: tabular-nums }
+.hud .sc small { font-family: var(--sans); font-size: 13px; color: var(--muted); font-weight: 500; margin-right: 6px }
+.timer { position: relative; height: 10px; border-radius: 99px; background: var(--band); overflow: hidden }
+.timer i { position: absolute; inset: 0 auto 0 0; background: var(--blue); border-radius: 99px; width: 100% }
+.timer.low i { background: var(--bad) }
+.timer em { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--paper) }
+.tline { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
+.tline b { color: var(--navy) }
+.pattern { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: var(--leaf) }
+.pattern .role { font-size: 13px; font-weight: 700; color: var(--blue); letter-spacing: .04em }
+.pattern .name { font-family: var(--soft); font-weight: 700; font-size: 24px; color: var(--navy); line-height: 1.35 }
+.pattern .name .x { color: var(--muted); font-weight: 400; margin: 0 6px }
+.pattern .how { font-size: 14px }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.modes button { text-align: left; border: 2px solid var(--line); background: var(--paper); border-radius: 14px; padding: 10px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0 }
+.modes button .k { font-weight: 700; font-size: 14px }
+.modes button .v { font-family: var(--eng); font-size: 15px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.modes #mode-mod .k { color: var(--mod) } .modes #mode-tgt .k { color: var(--tgt) }
+.modes #mode-mod[aria-pressed="true"] { border-color: var(--mod); background: var(--mod-bg) }
+.modes #mode-tgt[aria-pressed="true"] { border-color: var(--tgt); background: var(--tgt-bg) }
+.sent { font-family: var(--eng); font-size: 22px; line-height: 2.3; padding: 18px 16px; border-radius: 14px; background: var(--paper);
+  border: 1px solid var(--line); touch-action: none; user-select: none; -webkit-user-select: none; cursor: text }
+.tk { display: inline; border: 0; background: none; padding: 3px 2px; margin: 0; border-radius: 6px; font: inherit; color: var(--ink); cursor: pointer; line-height: inherit }
+.tk.ms { background: var(--mod-bg); color: var(--mod) }
+.tk.ts { background: var(--tgt-bg); color: var(--tgt); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px }
+.tk.ms.ts { background: linear-gradient(var(--mod-bg) 50%, var(--tgt-bg) 50%) }
+.hint { font-size: 13.5px; color: var(--muted) }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end }
+.fb { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--band) }
+.fb .head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; font-weight: 700 }
+.fb .gain { font-family: var(--serif); font-size: 22px; color: var(--navy) }
+.fb ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px }
+.ok { color: var(--ok) } .no { color: var(--bad) }
+.ans { font-family: var(--eng); font-size: 18px; line-height: 2 }
+.ans .am { color: var(--mod); background: var(--mod-bg); border-radius: 4px; padding: 1px 2px }
+.ans .at { color: var(--tgt); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px }
+.ans .ao { text-decoration: underline dotted; text-decoration-color: var(--tgt); text-underline-offset: 4px }
+
+/* result */
+.big { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline }
+.big .total { font-family: var(--serif); font-weight: 600; font-size: 56px; color: var(--navy); line-height: 1; font-variant-numeric: tabular-nums }
+.big .total small { font-size: 20px; color: var(--muted); margin-left: 4px }
+.stat { display: flex; flex-direction: column; font-size: 13px; color: var(--muted) }
+.stat b { font-family: var(--serif); font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums }
+.rankmsg { padding: 14px 16px; border-radius: 12px; background: var(--leaf); color: var(--navy); font-weight: 700 }
+.namef { display: flex; flex-wrap: wrap; gap: 8px }
+.namef input { flex: 1 1 180px; min-width: 0; border: 1px solid var(--line); background: var(--paper); border-radius: 12px; padding: 10px 14px }
+.review { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none }
+.review li { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px }
+.review li.wrong { border-color: var(--bad); background: var(--bad-bg) }
+.review .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px }
+.foot { font-size: 13px; color: var(--muted); text-align: center }
+.foot a { color: var(--navy) }
+@media (max-width: 480px) { .top h1 { font-size: 32px } .sent { font-size: 19px } .pattern .name { font-size: 20px } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+/* 문장성분 찾기: 성분마다 펜 색이 다르다. S 청록, V 파랑, O 갈색, C 초록. 고른 덩어리 끝에 작은 성분 표시가 붙는다. */
+:root { --cs: #1f5f63; --cs-bg: #d8ebe9; --cv: #2f5fb3; --cv-bg: #dde6f6; --co: #9a5a1c; --co-bg: #f5e3c8; --cc: #2f7a3e; --cc-bg: #dcefd9 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cs: #8fd0d2; --cs-bg: #1d3a3b; --cv: #9db8f0; --cv-bg: #1f2a44; --co: #e8b479; --co-bg: #3e2e1c; --cc: #9ad7a5; --cc-bg: #1f3a25 } }
+:root[data-theme="dark"] { --cs: #8fd0d2; --cs-bg: #1d3a3b; --cv: #9db8f0; --cv-bg: #1f2a44; --co: #e8b479; --co-bg: #3e2e1c; --cc: #9ad7a5; --cc-bg: #1f3a25 }
+.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px }
+.tools button { border: 2px solid var(--line); background: var(--paper); border-radius: 14px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0 }
+.tools button b { font-family: var(--serif); font-size: 22px; line-height: 1.2 }
+.tools button span { font-size: 13px; color: var(--muted); white-space: nowrap }
+.tools [data-l="S"] b { color: var(--cs) } .tools [data-l="V"] b { color: var(--cv) } .tools [data-l="O"] b { color: var(--co) } .tools [data-l="C"] b { color: var(--cc) }
+.tools [data-l="S"][aria-pressed="true"] { border-color: var(--cs); background: var(--cs-bg) }
+.tools [data-l="V"][aria-pressed="true"] { border-color: var(--cv); background: var(--cv-bg) }
+.tools [data-l="O"][aria-pressed="true"] { border-color: var(--co); background: var(--co-bg) }
+.tools [data-l="C"][aria-pressed="true"] { border-color: var(--cc); background: var(--cc-bg) }
+.tk.lS { background: var(--cs-bg); color: var(--cs) } .tk.lV { background: var(--cv-bg); color: var(--cv) }
+.tk.lO { background: var(--co-bg); color: var(--co) } .tk.lC { background: var(--cc-bg); color: var(--cc) }
+.tk.end::after { content: attr(data-lab); font-family: var(--sans); font-size: 11px; font-weight: 700; vertical-align: sub; margin-left: 2px }
+.tk.lS, .tk.lV, .tk.lO, .tk.lC { border-radius: 0 } .tk.st { border-top-left-radius: 6px; border-bottom-left-radius: 6px } .tk.end { border-top-right-radius: 6px; border-bottom-right-radius: 6px }
+.ans .xs, .ans .xv, .ans .xo, .ans .xc { font-weight: 600 }
+.ans .xs { color: var(--cs) } .ans .xv { color: var(--cv) } .ans .xo { color: var(--co) } .ans .xc { color: var(--cc) }
+.ans .hd { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px }
+.ans sub { font-family: var(--sans); font-size: 11px; font-weight: 700; margin: 0 2px }
+.ans .xm { color: var(--muted) }
+.form { font-size: 14px; color: var(--muted) }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="navrow"><nav class="tabs" aria-label="Reading Clinic 메뉴"><a href="/reading">수식어 찾기</a><a href="/reading/core" aria-current="page">문장성분 찾기</a></nav><a class="out" href="/" target="_blank" rel="noopener">Writing Clinic <small>영어 글쓰기 첨삭 · 새 창 ↗</small></a></div>
+    <header class="top">
+    <p class="brand">화전 우등생 학원 · READING</p>
+    <h1>Reading Clinic<small>필수 문장성분 찾기 훈련</small></h1>
+    <p>모든 영어 문장의 뼈대는 주어, 동사, 목적어, 보어예요. 형식 힌트는 없어요. 문장을 읽고 뼈대를 직접 찾아내는 것까지가 실력이에요.</p>
+  </header>
+
+  <section id="setup" class="grid2">
+    <div class="col">
+      <div class="card">
+        <h2>게임 설정</h2>
+        <div class="field"><span>학년 (모의고사 난이도)</span><div class="chips" id="grades"><button type="button" data-g="1" aria-pressed="true">고1</button><button type="button" data-g="2" aria-pressed="false">고2</button><button type="button" data-g="3" aria-pressed="false">고3</button></div></div>
+        <div class="field"><span>문장 수</span><div class="chips" id="counts"><button type="button" data-c="10" aria-pressed="true">10문장</button><button type="button" data-c="20" aria-pressed="false">20문장</button><button type="button" data-c="30" aria-pressed="false">30문장</button></div></div>
+        <div class="pts" id="pts"></div>
+        <button class="btn" id="start" type="button">시작하기</button>
+      </div>
+      <div class="card">
+        <h2>푸는 방법과 채점 기준</h2>
+        <ol class="rules">
+          <li>아래에서 <b>S 주어 · V 동사 · O 목적어 · C 보어</b> 중 하나를 고른 뒤, 문장에서 그 성분을 드래그해요. 단어 하나는 톡 누르기만 해도 돼요.</li>
+          <li>주어를 고르면 자동으로 동사로 넘어가요. 목적어와 보어는 직접 골라요.</li>
+          <li>이미 고른 덩어리를 톡 누르면 지워져요. 고른 덩어리끼리는 겹칠 수 없어요.</li>
+          <li><b>목적어나 보어가 없는 문장이면 고르지 않고 그대로 두는 것이 정답</b>이에요. 다 골랐으면 <b>확인</b>.</li>
+        </ol>
+        <details class="crit" open id="crit">
+          <summary>억울하지 않게: 정답으로 인정하는 범위</summary>
+          <div class="crit-body">
+            <h3>무엇을 고르나</h3>
+            <ul>
+              <li><b>주절</b>의 주어, 동사, 목적어, 보어만 골라요. 부사절(<i>because ~, while ~</i>)이나 수식어, to부정사 속에 들어 있는 주어·동사·목적어는 고르지 않아요.</li>
+              <li>4형식의 두 목적어(간접·직접)는 <b>둘 다 O</b>로, 5형식의 목적격보어는 <b>C</b>로 골라요.</li>
+            </ul>
+            <h3>핵심 단어만 들어 있으면 정답</h3>
+            <ul>
+              <li><b>주어·목적어</b>: 명사(대명사). <i>the, my</i> 같은 말이나 뒤에 붙은 수식어가 함께 들어가도 정답이에요.</li>
+              <li><b>동사</b>: 본동사. 조동사나 be동사, not이 함께 들어가도 돼요.</li>
+              <li><b>보어</b>: 형용사나 명사. <i>to clean the room</i>처럼 to부정사·원형부정사 보어는 그 동사(<i>clean</i>)가 들어가면 정답.</li>
+              <li>한 덩어리에 <b>다른 성분의 핵심 단어</b>까지 들어가면 오답이에요. 예: 주어를 고르다가 동사까지 끌고 간 경우.</li>
+              <li>문장에 없는 성분을 고르면 감점이에요.</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h2 id="board-title">랭킹 TOP 5</h2>
+        <p class="sub">학년과 문장 수마다 따로 순위를 매겨요. 수식어 찾기 랭킹과는 따로예요.</p>
+        <ol class="board" id="board"><li class="empty">랭킹을 불러오는 중…</li></ol>
+        <p class="best" id="best"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="game" class="card" hidden aria-live="polite">
+    <div class="hud"><p class="q">문항 <b id="qn">1</b> / <span id="qt">10</span></p><p class="sc"><small>점수</small><span id="score">0</span></p></div>
+    <div><div class="timer" id="timer"><i id="bar"></i><em id="mk1"></em><em id="mk2"></em></div>
+      <div class="tline"><span id="tleft">30초</span><span id="tbonus"></span></div></div>
+    <div class="tools" id="tools">
+      <button type="button" data-l="S" aria-pressed="true"><b>S</b><span>주어 <i id="nS"></i></span></button>
+      <button type="button" data-l="V" aria-pressed="false"><b>V</b><span>동사 <i id="nV"></i></span></button>
+      <button type="button" data-l="O" aria-pressed="false"><b>O</b><span>목적어 <i id="nO"></i></span></button>
+      <button type="button" data-l="C" aria-pressed="false"><b>C</b><span>보어 <i id="nC"></i></span></button>
+    </div>
+    <div class="sent" id="sent" role="group" aria-label="문장"></div>
+    <p class="hint" id="hint">고른 덩어리를 톡 누르면 지워져요. 목적어·보어가 없으면 그대로 두세요.</p>
+    <div class="actions" id="act"><button class="btn ghost" type="button" id="clear">모두 지우기</button><button class="btn" type="button" id="check" disabled>확인</button></div>
+    <div class="fb" id="fb" hidden>
+      <div class="head"><span id="fb-title"></span><span class="gain" id="fb-gain"></span></div>
+      <ul id="fb-list"></ul>
+      <p class="ans" id="fb-ans"></p>
+      <p class="form" id="fb-form"></p>
+      <div class="actions"><button class="btn" type="button" id="next">다음 문장</button></div>
+    </div>
+    <details class="crit"><summary>채점 기준 다시 보기</summary><div class="crit-body" id="crit-copy"></div></details>
+  </section>
+
+  <section id="result" class="grid2" hidden>
+    <div class="col">
+      <div class="card">
+        <h2 id="r-title">결과</h2>
+        <div class="big"><p class="total" id="r-score">0<small>점</small></p>
+          <p class="stat">완벽하게 맞힌 문장<b id="r-correct">0/10</b></p><p class="stat">평균 시간<b id="r-avg">0초</b></p><p class="stat">시간 보너스<b id="r-bonus">0</b></p></div>
+        <p class="rankmsg" id="r-rank">순위를 확인하는 중…</p>
+        <form class="namef" id="namef" hidden autocomplete="off"><input id="name" maxlength="12" placeholder="랭킹에 올릴 이름 (12자 이내)" aria-label="랭킹에 올릴 이름"><button class="btn" type="submit">이름 등록</button></form>
+        <div class="actions"><button class="btn ghost" type="button" id="home">설정으로</button><button class="btn" type="button" id="again">같은 설정으로 다시</button></div>
+      </div>
+      <div class="card"><h2>문장별 돌아보기</h2><ol class="review" id="review"></ol></div>
+    </div>
+    <div class="col"><div class="card"><h2 id="board2-title">랭킹 TOP 5</h2><ol class="board" id="board2"></ol></div></div>
+  </section>
+
+  <p class="foot">화전 우등생 학원 · 영어 글쓰기 연습은 <a href="/" target="_blank" rel="noopener">Writing Clinic ↗</a></p>
+</div>
+<script src="/core-data.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const LIMIT = { 1: 30, 2: 36, 3: 45 }, B1 = 50, B2 = 20, WRONG = 20, MAXN = { S: 1, V: 1, O: 2, C: 1 };
+const NAME = { S: '주어', V: '동사', O: '목적어', C: '보어' };
+const FORM = { 1: '1형식 (S + V)', 2: '2형식 (S + V + C)', 3: '3형식 (S + V + O)', 4: '4형식 (S + V + IO + DO)', 5: '5형식 (S + V + O + OC)' };
+const S = { g: 1, c: 10, qs: [], i: 0, score: 0, tool: 'S', ranges: [], t0: 0, timer: null, locked: false, results: [], boards: null, myId: null };
+function store(k, v) { try { if (v === undefined) return localStorage.getItem('wc.' + k); localStorage.setItem('wc.' + k, v); } catch (e) { return null; } }
+function deviceId() { let d = store('device'); if (!d || !/^[a-z0-9]{8,40}$/.test(d)) { d = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); store('device', d); } return d; }
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const josa = (w, a, b) => { const c = w.replace(/[^가-힣]/g, '').slice(-1); if (!c) return w + b; return w + (((c.charCodeAt(0) - 0xac00) % 28) ? a : b); };
+
+// ---- 설정
+function pressed(box, attr, val) { box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(val)))); }
+$('grades').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S.g = +b.dataset.g; pressed($('grades'), 'g', S.g); setupInfo(); };
+$('counts').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S.c = +b.dataset.c; pressed($('counts'), 'c', S.c); setupInfo(); };
+function setupInfo() {
+  const L = LIMIT[S.g];
+  $('pts').innerHTML = `<span>성분을 모두 맞히면 (성분 수만큼 나눠서)</span><b>+100</b><span>문장에 없는 성분을 고르면</span><b>−${WRONG}</b><span>완벽하게 맞히고 ${Math.round(L / 3)}초 안에</span><b>+${B1}</b><span>완벽하게 맞히고 ${Math.round(L * 2 / 3)}초 안에</span><b>+${B2}</b><span>한 문장 제한 시간</span><b>${L}초</b>`;
+  $('board-title').textContent = `랭킹 TOP 5 · 고${S.g} ${S.c}문장`;
+  renderBoard($('board'));
+  const best = store(`coreBest.${S.g}-${S.c}`);
+  $('best').textContent = best ? `이 기기의 최고 기록: ${best}점` : '';
+}
+function renderBoard(el) {
+  if (!S.boards) { el.innerHTML = `<li class="empty">${S.boardErr ? '랭킹 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.' : '랭킹을 불러오는 중…'}</li>`; return; }
+  const list = S.boards[`${S.g}-${S.c}`] || [];
+  el.innerHTML = list.length ? list.map((x, i) => `<li><span class="r">${i + 1}</span><span class="n${x.name ? '' : ' none'}">${x.name ? esc(x.name) : '이름 미등록'}</span><span class="s">${x.score}점</span></li>`).join('') : '<li class="empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요.</li>';
+}
+async function loadBoards() {
+  try { const r = await fetch('/api/drill?mode=core'); if (!r.ok) throw 0; S.boards = (await r.json()).boards; S.boardErr = false; }
+  catch (e) { S.boardErr = true; }
+  renderBoard($('board')); renderBoard($('board2'));
+}
+
+// ---- 게임
+function start() {
+  const seen = new Set(); S.qs = [];
+  let guard = 0;
+  while (S.qs.length < S.c && guard++ < 500) { const q = window.CORE.make(S.g), key = q.toks.map((t) => t.text).join(' '); if (seen.has(key)) continue; seen.add(key); S.qs.push(q); }
+  S.i = 0; S.score = 0; S.results = []; S.myId = null;
+  $('qt').textContent = S.c; $('score').textContent = '0';
+  $('setup').hidden = true; $('result').hidden = true; $('game').hidden = false; document.body.classList.add('playing');
+  $('crit-copy').innerHTML = document.querySelector('#crit .crit-body').innerHTML;
+  const L = LIMIT[S.g]; $('mk1').style.left = (100 - 100 / 3) + '%'; $('mk2').style.left = (100 - 200 / 3) + '%';
+  $('tbonus').innerHTML = `<b>${Math.round(L / 3)}초</b> 안에 +${B1} · <b>${Math.round(L * 2 / 3)}초</b> 안에 +${B2}`;
+  window.scrollTo({ top: 0 });
+  showQ();
+}
+function showQ() {
+  const q = S.qs[S.i];
+  $('qn').textContent = S.i + 1;
+  $('sent').innerHTML = q.toks.map((t) => `<button type="button" class="tk" data-i="${t.i}">${esc(t.text)}</button>`).join(' ');
+  S.ranges = []; S.locked = false; setTool('S'); paint();
+  $('fb').hidden = true; $('act').hidden = false;
+  S.t0 = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 100); tick();
+}
+function tick() {
+  const L = LIMIT[S.g], el = (performance.now() - S.t0) / 1000, left = Math.max(0, L - el);
+  $('bar').style.width = (left / L * 100) + '%'; $('timer').classList.toggle('low', left < 6);
+  $('tleft').textContent = `${Math.ceil(left)}초 남음`;
+  if (left <= 0) grade(true);
+}
+function setTool(l) { S.tool = l; $('tools').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.l === l))); }
+$('tools').onclick = (e) => { const b = e.target.closest('button'); if (b && !S.locked) setTool(b.dataset.l); };
+const owner = (i) => S.ranges.findIndex((r) => i >= r.a && i <= r.b);
+function paint() {
+  const toks = S.qs[S.i].toks;
+  $('sent').querySelectorAll('.tk').forEach((b) => {
+    const i = +b.dataset.i, k = owner(i), r = S.ranges[k];
+    b.className = 'tk' + (r ? ` l${r.lab}` + (i === r.a ? ' st' : '') + (i === r.b ? ' end' : '') : '');
+    if (r && i === r.b) b.dataset.lab = r.lab; else delete b.dataset.lab;
+  });
+  ['S', 'V', 'O', 'C'].forEach((l) => { const n = S.ranges.filter((r) => r.lab === l).length; $('n' + l).textContent = n ? `· ${n}` : ''; });
+  $('check').disabled = S.locked;
+}
+// 드래그: 다른 덩어리에 닿으면 그 앞에서 멈춤 → 겹치지 않음
+let drag = null;
+function clamp(a, i) {
+  const dir = i >= a ? 1 : -1; let b = a;
+  while (b !== i && owner(b + dir) < 0) b += dir;
+  return b;
+}
+$('sent').addEventListener('pointerdown', (e) => {
+  const t = e.target.closest('.tk'); if (!t || S.locked) return;
+  e.preventDefault(); const i = +t.dataset.i, k = owner(i);
+  if (k >= 0) { drag = { del: k }; return; }
+  drag = { a: i, b: i, lab: S.tool }; paintDrag();
+  try { $('sent').setPointerCapture(e.pointerId); } catch (x) {}
+});
+$('sent').addEventListener('pointermove', (e) => {
+  if (!drag || drag.del !== undefined) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest && el.closest('.tk');
+  if (t && $('sent').contains(t)) { drag.b = clamp(drag.a, +t.dataset.i); paintDrag(); }
+});
+function paintDrag() {
+  paint();
+  const lo = Math.min(drag.a, drag.b), hi = Math.max(drag.a, drag.b);
+  $('sent').querySelectorAll('.tk').forEach((b) => { const i = +b.dataset.i; if (i >= lo && i <= hi) { b.className = `tk l${drag.lab}` + (i === lo ? ' st' : '') + (i === hi ? ' end' : ''); if (i === hi) b.dataset.lab = drag.lab; } });
+}
+function endDrag() {
+  if (!drag) return; const d = drag; drag = null;
+  if (d.del !== undefined) { S.ranges.splice(d.del, 1); paint(); return; }
+  const r = { lab: d.lab, a: Math.min(d.a, d.b), b: Math.max(d.a, d.b) };
+  const same = S.ranges.filter((x) => x.lab === r.lab);
+  if (same.length >= MAXN[r.lab]) S.ranges.splice(S.ranges.indexOf(same[0]), 1);
+  S.ranges.push(r);
+  if (r.lab === 'S' && !S.ranges.some((x) => x.lab === 'V')) setTool('V');
+  paint();
+}
+$('sent').addEventListener('pointerup', endDrag); $('sent').addEventListener('pointercancel', endDrag);
+$('sent').addEventListener('keydown', (e) => {
+  const t = e.target.closest('.tk'); if (!t || S.locked || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault(); const i = +t.dataset.i, k = owner(i);
+  if (k >= 0) { S.ranges.splice(k, 1); paint(); return; }
+  drag = { a: i, b: i, lab: S.tool }; endDrag();
+});
+$('clear').onclick = () => { if (S.locked) return; S.ranges = []; setTool('S'); paint(); };
+$('check').onclick = () => grade(false);
+
+function judge(q, ranges) {
+  const { toks, comps } = q, words = (ids) => ids.map((i) => toks[i].text.replace(/[.,]$/, '')).join(' ');
+  const inR = (r, i) => i >= r.a && i <= r.b;
+  const used = new Set(), lines = [];
+  let matched = 0;
+  comps.forEach((c) => {
+    const k = ranges.findIndex((r, j) => !used.has(j) && r.lab === c.lab && c.heads.every((h) => inR(r, h)) && comps.every((o) => o === c || !o.heads.some((h) => inR(r, h))));
+    const label = NAME[c.lab] + (c.lab === 'O' && comps.filter((x) => x.lab === 'O').length > 1 ? (comps.filter((x) => x.lab === 'O').indexOf(c) ? '(직접)' : '(간접)') : '');
+    if (k >= 0) { used.add(k); matched++; lines.push({ ok: true, t: `${label} ${words(c.heads)}` }); return; }
+    const mine = ranges.find((r) => r.lab === c.lab && c.heads.some((h) => inR(r, h)));
+    const other = ranges.find((r) => r.lab !== c.lab && c.heads.some((h) => inR(r, h)));
+    let why;
+    if (mine) why = `고른 부분에 다른 성분의 핵심 단어까지 들어갔어요.`;
+    else if (other) why = `'${words(c.heads)}' 부분을 ${josa(NAME[other.lab], '으로', '로')} 골랐어요.`;
+    else if (ranges.some((r) => r.lab === c.lab)) why = `고른 부분에 핵심 단어 '${words(c.heads)}' 부분이 들어가지 않았어요.`;
+    else why = `고르지 않았어요. 핵심 단어는 '${words(c.heads)}'.`;
+    lines.push({ ok: false, t: `${label} · ${why}` });
+  });
+  const extras = ranges.filter((r, j) => !used.has(j));
+  extras.forEach((r) => {
+    const txt = toks.slice(r.a, r.b + 1).map((t) => t.text).join(' ');
+    const none = !comps.some((c) => c.lab === r.lab);
+    lines.push({ ok: false, t: none ? `이 문장에는 ${josa(NAME[r.lab], '이', '가')} 없어요. ('${txt}' −${WRONG})` : `'${txt}' 부분은 ${josa(NAME[r.lab], '이', '가')} 아니에요. (−${WRONG})` });
+  });
+  return { matched, total: comps.length, extras: extras.length, perfect: matched === comps.length && !extras.length, lines };
+}
+function annotate(q) {
+  const { toks, form } = q, cls = { S: 'xs', V: 'xv', O: 'xo', C: 'xc' };
+  const sub = (p) => p === 'O1' ? (form === 4 ? 'IO' : 'O') : p === 'O2' ? 'DO' : p === 'C' ? (form === 5 ? 'OC' : 'C') : p;
+  let out = '';
+  toks.forEach((t, k) => {
+    const prev = toks[k - 1], next = toks[k + 1];
+    if (!t.part) {
+      const openP = !prev || prev.part; const closeP = !next || next.part;
+      const m = closeP ? t.text.match(/^(.*?)([,.]*)$/) : [null, t.text, ''];
+      out += (openP ? '<span class="xm">(' : '') + esc(m[1]) + (closeP ? ')</span>' + esc(m[2]) : '') + ' ';
+      return;
+    }
+    const last = !next || next.part !== t.part;
+    const m = last ? t.text.match(/^(.*?)([,.]*)$/) : [null, t.text, ''];
+    out += `<span class="${cls[t.part[0]]}${t.head ? ' hd' : ''}">${esc(m[1])}</span>` + (last ? `<sub class="${cls[t.part[0]]}">${sub(t.part)}</sub>` + esc(m[2]) : '') + ' ';
+  });
+  return out;
+}
+function grade(timeout) {
+  if (S.locked) return;
+  S.locked = true; clearInterval(S.timer); drag = null; paint();
+  const q = S.qs[S.i], L = LIMIT[S.g], secs = Math.min(L, (performance.now() - S.t0) / 1000);
+  const j = judge(q, S.ranges);
+  let gain = Math.max(0, Math.round(100 * j.matched / j.total) - WRONG * j.extras), bonus = 0;
+  if (j.perfect && !timeout) bonus = secs <= L / 3 ? B1 : secs <= L * 2 / 3 ? B2 : 0;
+  gain += bonus; S.score += gain; $('score').textContent = S.score;
+  S.results.push({ q, ok: j.perfect, matched: j.matched, total: j.total, extras: j.extras, gain, bonus, secs, timeout });
+  $('fb-title').innerHTML = timeout ? '<span class="no">시간 초과</span>' : j.perfect ? '<span class="ok">완벽해요!</span>' : '<span class="no">아쉬워요</span>';
+  $('fb-gain').textContent = `+${gain}점` + (bonus ? ` (시간 보너스 ${bonus})` : '');
+  $('fb-list').innerHTML = j.lines.map((l) => `<li class="${l.ok ? 'ok' : 'no'}">${l.ok ? '○ ' : '× '}${esc(l.t)}</li>`).join('') + `<li>걸린 시간 ${secs.toFixed(1)}초</li>`;
+  $('fb-ans').innerHTML = annotate(q);
+  $('fb-form').textContent = `이 문장의 형식: ${FORM[q.form]} · 밑줄 = 핵심 단어, ( ) = 수식어`;
+  $('next').textContent = S.i + 1 < S.qs.length ? '다음 문장' : '결과 보기';
+  $('act').hidden = true; $('fb').hidden = false; $('next').focus({ preventScroll: true });
+  $('fb').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+$('next').onclick = () => { S.i++; if (S.i < S.qs.length) showQ(); else finish(); };
+
+// ---- 결과와 랭킹
+async function finish() {
+  $('game').hidden = true; $('result').hidden = false; document.body.classList.remove('playing'); window.scrollTo({ top: 0 });
+  const n = S.results.length, correct = S.results.filter((r) => r.ok).length, secs = S.results.reduce((a, r) => a + r.secs, 0), bonus = S.results.reduce((a, r) => a + r.bonus, 0);
+  $('r-title').textContent = `결과 · 고${S.g} ${S.c}문장`;
+  $('r-score').innerHTML = `${S.score}<small>점</small>`; $('r-correct').textContent = `${correct}/${n}`;
+  $('r-avg').textContent = `${(secs / n).toFixed(1)}초`; $('r-bonus').textContent = `+${bonus}`;
+  $('review').innerHTML = S.results.map((r, i) => `<li class="${r.ok ? '' : 'wrong'}"><div class="meta"><b>${i + 1}. ${r.q.form}형식</b><span>${r.timeout ? '시간 초과' : r.ok ? '완벽' : `성분 ${r.matched}/${r.total}` + (r.extras ? ` · 없는 성분 ${r.extras}개` : '')}</span><span>+${r.gain}점 · ${r.secs.toFixed(1)}초</span></div><p class="ans">${annotate(r.q)}</p></li>`).join('');
+  const key = `coreBest.${S.g}-${S.c}`, prev = Number(store(key) || 0); if (S.score > prev) store(key, String(S.score));
+  $('board2-title').textContent = `랭킹 TOP 5 · 고${S.g} ${S.c}문장`;
+  $('namef').hidden = true; $('r-rank').textContent = '순위를 확인하는 중…';
+  try {
+    const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'submit', mode: 'core', grade: S.g, count: S.c, score: S.score, correct, secs: Math.round(secs), device: deviceId() }) });
+    const d = await r.json(); if (!r.ok) throw d;
+    S.myId = { id: d.id, token: d.token };
+    $('r-rank').textContent = d.rank <= 5 ? `고${S.g} ${S.c}문장에서 전체 ${d.total}개 기록 중 ${d.rank}등! 이름을 남겨 랭킹에 올려 보세요.` : `전체 ${d.total}개 기록 중 ${d.rank}등이에요. 5등 안에 들면 랭킹에 이름을 올릴 수 있어요.`;
+    $('namef').hidden = d.rank > 5;
+  } catch (e) { $('r-rank').textContent = '랭킹 서버에 연결하지 못해 이번 기록은 이 기기에만 저장했어요.'; }
+  await loadBoards();
+}
+$('namef').onsubmit = async (e) => {
+  e.preventDefault(); const name = $('name').value.trim(); if (!name || !S.myId) return;
+  const btn = $('namef').querySelector('button'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/drill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'name', mode: 'core', grade: S.g, count: S.c, name, id: S.myId.id, token: S.myId.token }) });
+    const d = await r.json();
+    if (r.ok) { S.boards = d.boards; renderBoard($('board2')); renderBoard($('board')); $('namef').hidden = true; $('r-rank').textContent = `'${name}' 이름으로 랭킹에 올렸어요.`; }
+    else $('r-rank').textContent = d.error === 'not_top' ? '그 사이 다른 친구들의 기록에 밀려 5등 밖으로 나갔어요.' : d.error === 'bad_name' ? '이름은 한글, 영어, 숫자로 적어 주세요.' : '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.';
+  } catch (x) { $('r-rank').textContent = '이름을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.'; }
+  btn.disabled = false;
+};
+$('again').onclick = start;
+$('home').onclick = () => { $('result').hidden = true; $('setup').hidden = false; setupInfo(); window.scrollTo({ top: 0 }); };
+$('start').onclick = start;
+setupInfo(); loadBoards();
+</script>
+</body></html>

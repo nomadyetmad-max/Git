@@ -24,7 +24,7 @@ function doPost(e) {
     let used = 0; for (let i = 0; i < times.length; i++) if (String(times[i][0]).slice(0, 10) === d.date && String(devs[i][0]) === String(d.device)) used++;
     return out({ ok: true, used });
   }
-  if (d && /^rank_/.test(d.action || '')) {
+  if (d && /^rank2?_/.test(d.action || '')) {
     if (String(d.auth).trim() !== SECRET.trim()) return out({ ok: false, reason: 'secret' });
     return out(drill(d));
   }
@@ -52,7 +52,7 @@ function doPost(e) {
 // 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
 function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return out({ ok: Boolean(ss), version: 6, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
+  return out({ ok: Boolean(ss), version: 7, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
@@ -105,34 +105,38 @@ function stats(detail) {
   return res;
 }
 
-// ---- 비필수 문장성분 Drill 랭킹 (사이트의 /drill 화면에서 사용). 학년 × 문장 수(10/20/30)마다 따로 순위를 매깁니다.
+// ---- Reading Clinic 랭킹 (수식어 찾기 / 문장성분 찾기). 종류 × 학년 × 문장 수(10/20/30)마다 따로 순위를 매깁니다.
 const DRILL = '드릴 기록';
-const DRILL_HEAD = ['기록 ID', '시간', '학년', '문장 수', '점수', '정답 수', '걸린 시간(초)', '기기', '이름'];
+const DRILL_HEAD = ['기록 ID', '시간', '학년', '문장 수', '점수', '정답 수', '걸린 시간(초)', '기기', '이름', '종류'];
+const DRILL_KIND = { mod: '수식어 찾기', core: '문장성분 찾기' };
 function drillSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(DRILL) || ss.insertSheet(DRILL);
-  if (sh.getLastRow() === 0) { sh.appendRow(DRILL_HEAD); sh.setFrozenRows(1); sh.getRange(1, 1, 1, DRILL_HEAD.length).setFontWeight('bold'); }
+  if (sh.getLastRow() === 0) { sh.appendRow(DRILL_HEAD); sh.setFrozenRows(1); }
+  if (sh.getRange(1, 10).getValue() !== '종류') sh.getRange(1, 10).setValue('종류');
+  sh.getRange(1, 1, 1, DRILL_HEAD.length).setFontWeight('bold');
   return sh;
 }
 function drillRows(sh) {
   if (sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, 9).getDisplayValues().map((r, i) => ({ row: i + 2, id: r[0], time: r[1], grade: r[2], count: r[3], score: Number(r[4]) || 0, correct: Number(r[5]) || 0, secs: Number(r[6]) || 0, name: r[8] }));
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 10).getDisplayValues().map((r, i) => ({ row: i + 2, id: r[0], time: r[1], grade: r[2], count: r[3], score: Number(r[4]) || 0, correct: Number(r[5]) || 0, secs: Number(r[6]) || 0, name: r[8], kind: r[9] === DRILL_KIND.core ? 'core' : 'mod' }));
 }
 // 점수가 높을수록, 같으면 먼저 세운 기록이 위
-function drillSorted(rows, grade, count) {
-  return rows.filter((x) => String(x.grade) === String(grade) && String(x.count) === String(count)).sort((a, b) => b.score - a.score || a.row - b.row);
+function drillSorted(rows, grade, count, kind) {
+  return rows.filter((x) => x.kind === kind && String(x.grade) === String(grade) && String(x.count) === String(count)).sort((a, b) => b.score - a.score || a.row - b.row);
 }
 function drill(d) {
   const lock = LockService.getScriptLock(); lock.waitLock(8000);
   try {
+    const kind = /^rank2_/.test(d.action) && d.mode === 'core' ? 'core' : 'mod', act = d.action.replace(/^rank2_/, 'rank_');
     const sh = drillSheet(), cell = (v) => { const s = v == null ? '' : String(v); return /^[=+\-@]/.test(s) ? "'" + s : s; };
-    if (d.action === 'rank_add') {
-      sh.appendRow([d.id, d.time, d.grade, d.count, d.score, d.correct, d.secs, d.device, ''].map(cell));
-      const list = drillSorted(drillRows(sh), d.grade, d.count);
+    if (act === 'rank_add') {
+      sh.appendRow([d.id, d.time, d.grade, d.count, d.score, d.correct, d.secs, d.device, '', DRILL_KIND[kind]].map(cell));
+      const list = drillSorted(drillRows(sh), d.grade, d.count, kind);
       return { ok: true, rank: list.findIndex((x) => x.id === String(d.id)) + 1, total: list.length };
     }
-    if (d.action === 'rank_name') {
-      const list = drillSorted(drillRows(sh), d.grade, d.count), i = list.findIndex((x) => x.id === String(d.id));
+    if (act === 'rank_name') {
+      const list = drillSorted(drillRows(sh), d.grade, d.count, kind), i = list.findIndex((x) => x.id === String(d.id));
       if (i < 0) return { ok: false, reason: 'not_found' };
       if (i >= 5) return { ok: false, reason: 'not_top' };
       if (list[i].name) return { ok: false, reason: 'already' };
@@ -140,8 +144,8 @@ function drill(d) {
     }
     const rows = drillRows(sh), boards = {};
     [1, 2, 3].forEach((g) => [10, 20, 30].forEach((c) => {
-      boards[g + '-' + c] = drillSorted(rows, g, c).slice(0, 5).map((x) => ({ name: x.name, score: x.score, correct: x.correct, secs: x.secs, date: String(x.time).slice(0, 10) }));
+      boards[g + '-' + c] = drillSorted(rows, g, c, kind).slice(0, 5).map((x) => ({ name: x.name, score: x.score, correct: x.correct, secs: x.secs, date: String(x.time).slice(0, 10) }));
     }));
-    return { ok: true, boards };
+    return { ok: true, boards, mode: kind };
   } finally { lock.releaseLock(); }
 }

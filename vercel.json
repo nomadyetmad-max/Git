@@ -15,6 +15,10 @@
     {
       "source": "/reading",
       "destination": "/drill"
+    },
+    {
+      "source": "/reading/core",
+      "destination": "/core"
     }
   ]
 }
