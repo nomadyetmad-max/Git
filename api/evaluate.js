@@ -3,6 +3,7 @@
 // 선택 환경 변수: MODEL (기본 claude-sonnet-5-5), HOURLY_LIMIT (기기당 1시간 첨삭 횟수, 기본 5),
 //                 IP_HOURLY_LIMIT (같은 인터넷 주소당 1시간, 기본 60 — 학원 와이파이처럼 여럿이 함께 쓰는 경우 고려),
 //                 DAILY_LIMIT (사이트 전체 하루 첨삭 횟수, 기본 300)
+//                 LOG_URL, LOG_SECRET (첨삭 기록을 구글 시트에 쌓는 Apps Script 웹 앱 주소와 비밀값)
 const { buildPromptFor, LEVELS, TOPICS } = require('./_lib/prompt');
 
 const MODEL = process.env.MODEL || 'claude-sonnet-5-5';
@@ -26,6 +27,15 @@ function allow(ip, device) {
   if (hits.size > 10000) hits.clear();
   return null;
 }
+async function saveLog(row) {
+  if (!process.env.LOG_URL) return;
+  try {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 4000);
+    await fetch(process.env.LOG_URL, { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, signal: ctl.signal,
+      body: JSON.stringify(Object.assign({ secret: process.env.LOG_SECRET || '' }, row)) });
+    clearTimeout(timer);
+  } catch (e) { console.error('log failed', e && e.name); }
+}
 function parseJson(text) {
   const t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   try { return JSON.parse(t); } catch (e) {}
@@ -36,13 +46,14 @@ function parseJson(text) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  if (req.method === 'GET') return res.status(200).json({ ready: Boolean(process.env.ANTHROPIC_API_KEY) });
+  if (req.method === 'GET') return res.status(200).json({ ready: Boolean(process.env.ANTHROPIC_API_KEY), logging: Boolean(process.env.LOG_URL) });
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_ready' });
 
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
   const { level, topic, type, text } = body || {};
+  const name = typeof body?.name === 'string' ? body.name.trim().slice(0, 20) : '';
   if (!LEVELS[level] || typeof text !== 'string' || typeof topic !== 'string') return res.status(400).json({ error: 'bad_request' });
   const t = TOPICS.find((x) => x.en.toLowerCase() === topic.toLowerCase());
   if (!t) return res.status(400).json({ error: 'bad_request' });
@@ -73,6 +84,18 @@ module.exports = async (req, res) => {
     const textOut = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
     const parsed = parseJson(textOut);
     if (!parsed || typeof parsed !== 'object') return res.status(502).json({ error: 'upstream' });
+    if (parsed.valid !== false) {
+      const g = parsed.grammar || {}, st = parsed.structure || {};
+      await saveLog({
+        time: new Date(Date.now() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 19),
+        name, level: LEVELS[level].name, topic: t.en + ' (' + t.ko + ')',
+        type: gtype || ('자동: ' + (typeof parsed.type === 'string' ? parsed.type : '')),
+        words: clean.split(/\s+/).length, grammar: g.level, structure: st.level,
+        errors: (Array.isArray(g.errors) ? g.errors : []).map((e) => (e.label || '') + (e.repeat > 1 ? ' ×' + e.repeat : '')).join(', '),
+        weak: (Array.isArray(st.criteria) ? st.criteria : []).filter((c) => c.verdict === 'weak').map((c) => c.name).join(', '),
+        text: clean, revised: typeof parsed.revised === 'string' ? parsed.revised : '', device
+      });
+    }
     return res.status(200).json(parsed);
   } catch (e) {
     console.error('relay failure', e);

@@ -232,7 +232,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
         <header><span class="no">3</span><h2 id="h-write">글쓰기</h2><span class="sub" id="guide"></span></header>
         <p class="lead">먼저 어떤 종류의 글을 쓸지 골라 보세요. 첨삭도 그 종류에 맞춰 이루어져요. 첫 문장에 하고 싶은 말을 먼저 쓰고, 이유나 예시를 차례로 이어 보세요. 단어가 막히면 옆의 단어 힌트를 눌러도 돼요. 쓰던 글은 이 기기에 자동으로 저장돼요.</p>
         <div class="fields">
-          <label for="name">이름 (선택)<input id="name" type="text" maxlength="20" autocomplete="off"></label>
+          <label for="name">이름 (선택 · 반·번호나 별명도 좋아요)<input id="name" type="text" maxlength="20" autocomplete="off"></label>
           <label for="gtype" id="gtype-wrap">글의 종류
             <select id="gtype">
               <option value="">자동 판단</option>
@@ -251,6 +251,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
           <button class="btn" id="btn-copy-sub" type="button">제출용으로 복사</button>
           <span class="note" id="status" role="status"></span>
         </div>
+        <p class="note privacy" id="privacy" hidden>첨삭을 받으면 쓴 글, 이름 칸에 적은 내용, 레벨·주제와 첨삭 결과가 수업에 활용하기 위해 선생님께 저장돼요.</p>
         <div class="offline" id="offline" hidden>이 기기에서는 AI 첨삭을 받을 수 없습니다. AI 첨삭은 Claude에 로그인한 기기에서만 됩니다. <b>제출용으로 복사</b>를 눌러 글을 선생님께 보내면, 선생님이 같은 기준으로 첨삭해 줍니다.</div>
       </section>
     </div>
@@ -779,7 +780,7 @@ async function evaluateApi(text, st) {
   state.ctl = new AbortController();
   try {
     const res = await fetch('api/evaluate', { method: 'POST', headers: { 'content-type': 'application/json' }, signal: state.ctl.signal,
-      body: JSON.stringify({ level: state.level, topic: cur().en, type: $('gtype').value, text, device: deviceId() }) });
+      body: JSON.stringify({ level: state.level, topic: cur().en, type: $('gtype').value, text, name: $('name').value.trim().slice(0, 20), device: deviceId() }) });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data || data.error) { st.className = 'note warn'; st.textContent = API_COPY[data && data.error] || '첨삭 결과를 받지 못했습니다. 다시 눌러 주세요.'; return; }
     if (data.valid === false) { st.className = 'note warn'; st.textContent = str(data.reason) || '이 글은 첨삭할 수 없습니다.'; return; }
@@ -791,7 +792,7 @@ async function evaluateApi(text, st) {
 }
 async function apiReady() {
   if (location.protocol !== 'https:' && location.protocol !== 'http:') return null;
-  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; return d && d.ready ? 'api' : null; } catch (e) { return null; }
+  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) $('privacy').hidden = false; return d && d.ready ? 'api' : null; } catch (e) { return null; }
 }
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 
