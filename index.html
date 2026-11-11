@@ -289,6 +289,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
 
   <footer class="foot">
     <p>오늘 쓴 한 단락이 다음 글의 첫 문장이 됩니다.</p>
+    <a href="stats" id="stats-link" hidden>우리의 글쓰기 통계 <span aria-hidden="true">→</span></a>
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
@@ -792,7 +793,7 @@ async function evaluateApi(text, st) {
 }
 async function apiReady() {
   if (location.protocol !== 'https:' && location.protocol !== 'http:') return null;
-  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) $('privacy').hidden = false; return d && d.ready ? 'api' : null; } catch (e) { return null; }
+  try { const r = await fetch('api/evaluate', { method: 'GET' }); const d = r.ok ? await r.json() : null; if (d && d.logging) { $('privacy').hidden = false; $('stats-link').hidden = false; } return d && d.ready ? 'api' : null; } catch (e) { return null; }
 }
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 

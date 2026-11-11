@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Writing Clinic 통계</title>
+<meta name="description" content="Writing Clinic에서 받은 첨삭을 모아 만든 통계">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&display=swap">
+<style>
+/* Layout: the Writing Clinic notebook look; numbers first (three tiles), then one card per question a student or teacher would ask.
+   Single-measure charts use the one green ink; the score chart pairs a validated red-clay (문법) and blue (구조). */
+:root {
+  --bg: #f6f2e7; --paper: #fffdf6; --ink: #24312a; --muted: #6c7369; --line: #e3dccb;
+  --navy: #2f5d46; --blue: #5b8f6f; --band: #edf0e2; --sel: #e7efdf; --on-navy: #fffdf6; --leaf: #dfe9d6; --shadow: rgba(47, 93, 70, .07);
+  --bar: #2f7a52; --bar-soft: #e3ece0; --gram: #c4553b; --struc: #1679a8; --warn: #b44a37; --grid: #ece5d4;
+  --sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --soft: 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', serif;
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
+  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --sel: #26372d; --on-navy: #151b17; --leaf: #26372d; --shadow: rgba(0, 0, 0, .25);
+  --bar: #6fbf8f; --bar-soft: #26372d; --gram: #d6735a; --struc: #2b9fd0; --warn: #ec9c8a; --grid: #28322c; color-scheme: dark } }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; word-break: keep-all }
+[hidden] { display: none !important }
+h1, h2, h3, p { margin: 0 }
+button, input { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px }
+.top { display: flex; flex-direction: column; gap: 8px }
+.top a.back { color: var(--navy); font-size: 14px; text-decoration: none; width: fit-content }
+.top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 38px; line-height: 1.15; color: var(--navy) }
+.top p { font-family: var(--soft); font-size: 15.5px; line-height: 1.8; max-width: 62ch }
+.meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px }
+.tile { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 2px }
+.tile b { font-family: var(--serif); font-weight: 500; font-size: 34px; line-height: 1.1; color: var(--navy); font-variant-numeric: tabular-nums }
+.tile span { font-size: 13px; color: var(--muted) }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.card.wide { grid-column: 1 / -1 }
+.card h2 { font-family: var(--soft); font-size: 18px; font-weight: 700; color: var(--navy) }
+.card .lead { font-family: var(--soft); font-size: 14px; color: var(--muted); line-height: 1.7 }
+.empty { font-size: 14px; color: var(--muted); background: var(--band); border-radius: 12px; padding: 12px 14px }
+
+/* horizontal bars */
+.hbars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px }
+.hbars li { display: grid; grid-template-columns: minmax(84px, 38%) minmax(0, 1fr) auto; align-items: center; gap: 10px; font-size: 14px }
+.hbars .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.hbars .track, .hbars .fill, .pair .track, .pair .fill { display: block }
+.hbars .track { height: 14px; background: var(--bar-soft); border-radius: 99px; overflow: hidden }
+.hbars .fill { height: 100%; background: var(--bar); border-radius: 99px; min-width: 4px }
+.hbars .val { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); min-width: 3.5em; text-align: right }
+.hbars li:first-child .val { color: var(--ink); font-weight: 700 }
+
+/* daily columns */
+.cols { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; align-items: end; height: 170px; border-bottom: 1px solid var(--line); position: relative }
+.cols .c { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center }
+.cols .c i { display: block; width: 70%; max-width: 26px; background: var(--bar); border-radius: 4px 4px 0 0; min-height: 0 }
+.cols .c.zero i { background: transparent }
+.cols .c .tip { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; padding: 2px 8px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 2 }
+.cols .c:hover .tip, .cols .c:focus .tip { opacity: 1 }
+.cols .c .n { position: absolute; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums }
+.xlab { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums }
+
+/* score pairs */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted) }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px }
+.scores { display: flex; flex-direction: column; gap: 12px }
+.srow { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px; align-items: center }
+.srow .nm { font-family: var(--serif); font-size: 16px; color: var(--navy) }
+.srow .nm small { display: block; font-family: var(--sans); font-size: 12px; color: var(--muted) }
+.pair { display: flex; flex-direction: column; gap: 3px }
+.pair div { display: grid; grid-template-columns: minmax(0, 1fr) 3em; align-items: center; gap: 8px }
+.pair .track { height: 12px; background: var(--bar-soft); border-radius: 99px; overflow: hidden }
+.pair .fill { height: 100%; border-radius: 99px }
+.pair .g .fill { background: var(--gram) } .pair .s .fill { background: var(--struc) }
+.pair .v { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink) }
+.scale { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px; font-size: 11px; color: var(--muted) }
+.scale div { display: flex; justify-content: space-between; padding-right: calc(3em + 8px) }
+
+/* teacher */
+.teacher form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.teacher input { border: 1px solid var(--line); border-radius: 99px; background: var(--bg); padding: 8px 14px; font-size: 14px; min-width: 0; flex: 1 1 200px }
+.btn { border: 1px solid var(--navy); background: var(--navy); color: var(--on-navy); border-radius: 99px; padding: 8px 18px; font-weight: 700; cursor: pointer; font-size: 14px }
+.btn.ghost { background: transparent; color: var(--navy); border-color: var(--line) }
+.note { font-size: 13px; color: var(--muted) } .note.warn { color: var(--warn) }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top }
+th { background: var(--band); font-weight: 700; font-size: 12.5px; color: var(--muted) }
+td.num { font-variant-numeric: tabular-nums; text-align: right } th.num { text-align: right }
+tr:last-child td { border-bottom: 0 }
+.recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px }
+.recent details { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--bg) }
+.recent summary { cursor: pointer; font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline }
+.recent summary b { font-weight: 700 } .recent summary span { color: var(--muted); font-size: 12.5px }
+.recent .txt { font-family: var(--serif); font-size: 15px; line-height: 1.8; margin-top: 8px; white-space: pre-wrap; overflow-wrap: anywhere }
+.recent .txt.rev { color: var(--navy) }
+.recent h4 { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); font-weight: 700 }
+.foot { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted) }
+.foot a { color: var(--navy); font-weight: 700; text-decoration: none }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr) } .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)) } .tile b { font-size: 26px } .top h1 { font-size: 30px } }
+@media (max-width: 420px) { .srow, .scale { grid-template-columns: 76px minmax(0, 1fr) } .cols .c .n { display: none } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="back" href="/">← Writing Clinic으로 돌아가기</a>
+    <h1>우리의 글쓰기 통계</h1>
+    <p>Writing Clinic에서 받은 첨삭을 모아 만든 통계예요. 친구들이 어떤 주제로 쓰고, 어디에서 많이 틀리는지 볼 수 있어요. 이름과 글 내용은 보이지 않아요.</p>
+    <span class="meta" id="updated">통계를 불러오는 중…</span>
+  </header>
+
+  <section class="tiles" aria-label="첨삭 수">
+    <div class="tile"><b id="t-total">–</b><span>지금까지 첨삭</span></div>
+    <div class="tile"><b id="t-week">–</b><span>최근 7일</span></div>
+    <div class="tile"><b id="t-today">–</b><span>오늘</span></div>
+  </section>
+
+  <div class="grid" id="charts">
+    <section class="card wide"><h2>최근 14일 첨삭 수</h2><div id="c-days"></div></section>
+    <section class="card"><h2>많이 나온 문법 오류</h2><p class="lead">첨삭에서 지적된 횟수예요. 위에 있는 오류부터 조심해 보세요.</p><div id="c-errors"></div></section>
+    <section class="card"><h2>보완이 많이 필요한 구조 항목</h2><p class="lead">‘보완 필요’ 판정을 받은 횟수예요.</p><div id="c-weak"></div></section>
+    <section class="card wide"><h2>레벨별 평균 점수</h2><p class="lead">5점 만점이에요. 레벨마다 보는 기준이 달라서, 레벨끼리 점수를 비교하기보다 내 레벨의 평균과 비교해 보세요.</p><div id="c-scores"></div></section>
+    <section class="card"><h2>레벨별 이용</h2><div id="c-levels"></div></section>
+    <section class="card"><h2>글의 종류</h2><div id="c-types"></div></section>
+    <section class="card wide"><h2>인기 주제</h2><div id="c-topics"></div></section>
+  </div>
+
+  <section class="card wide teacher" aria-labelledby="h-teacher">
+    <h2 id="h-teacher">선생님 전용</h2>
+    <p class="lead">비밀번호를 넣으면 학생별 기록과 최근 첨삭 글을 볼 수 있어요.</p>
+    <form id="t-form" autocomplete="off">
+      <label for="pw" class="note">비밀번호</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button class="btn" type="submit">보기</button>
+      <span class="note" id="t-status" role="status"></span>
+    </form>
+    <div id="t-body" hidden></div>
+  </section>
+
+  <footer class="foot">
+    <span>통계는 첨삭 기록이 쌓일 때마다 자동으로 바뀌어요. (1분 간격)</span>
+    <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 ↗</a>
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function h(tag, attrs, kids) {
+  const el = document.createElement(tag);
+  for (const k in (attrs || {})) { if (k === 'text') el.textContent = attrs[k]; else if (k === 'class') el.className = attrs[k]; else if (k === 'style') el.style.cssText = attrs[k]; else el.setAttribute(k, attrs[k]); }
+  for (const kid of [].concat(kids || [])) if (kid != null) el.append(kid);
+  return el;
+}
+const fmt = (n) => Number(n || 0).toLocaleString('ko-KR');
+const MSG = { not_ready: '아직 통계를 만들 기록이 연결되지 않았어요.', script_old: '통계 기능을 준비하고 있어요. 조금 뒤에 다시 와 주세요.', sheet_unreachable: '통계를 잠시 불러오지 못했어요. 조금 뒤에 새로고침해 주세요.' };
+
+function hbars(list, unit, total) {
+  if (!list || !list.length) return h('p', { class: 'empty', text: '아직 기록이 없어요.' });
+  const max = Math.max(...list.map((x) => x.count)) || 1;
+  return h('ul', { class: 'hbars' }, list.map((x) => h('li', { title: x.name + ': ' + fmt(x.count) + unit }, [
+    h('span', { class: 'lbl', text: x.name }),
+    h('span', { class: 'track' }, h('span', { class: 'fill', style: 'width:' + (x.count / max * 100) + '%' })),
+    h('span', { class: 'val', text: fmt(x.count) + unit + (total ? ' · ' + Math.round(x.count / total * 100) + '%' : '') })])));
+}
+function days(list) {
+  const max = Math.max(1, ...list.map((d) => d.count));
+  const cols = h('div', { class: 'cols', role: 'img', 'aria-label': '최근 14일 첨삭 수: ' + list.map((d) => d.date.slice(5) + ' ' + d.count + '회').join(', ') },
+    list.map((d) => h('div', { class: 'c' + (d.count ? '' : ' zero'), tabindex: '0' }, [
+      h('i', { style: 'height:' + (d.count / max * 100) + '%' }),
+      h('span', { class: 'tip', text: d.date.slice(5).replace('-', '/') + ' · ' + d.count + '회' }),
+      d.count && d.count === max ? h('span', { class: 'n', style: 'bottom:calc(' + (d.count / max * 100) + '% + 2px)', text: String(d.count) }) : null])));
+  const lab = h('div', { class: 'xlab', 'aria-hidden': 'true' }, list.map((d, i) => h('span', { text: i % 2 === (list.length - 1) % 2 ? String(Number(d.date.slice(8))) + '일' : '' })));
+  return h('div', {}, [cols, lab]);
+}
+function scores(levels) {
+  const has = levels.filter((l) => l.count && l.grammar != null);
+  if (!has.length) return h('p', { class: 'empty', text: '아직 기록이 없어요.' });
+  const bar = (cls, v, label) => h('div', { class: cls, title: label + ' ' + v + '점' }, [h('span', { class: 'track' }, h('span', { class: 'fill', style: 'width:' + (v / 5 * 100) + '%' })), h('span', { class: 'v', text: v.toFixed(1) })]);
+  return h('div', { class: 'scores' }, [
+    h('div', { class: 'legend' }, [h('span', {}, [h('i', { style: 'background:var(--gram)' }), '문법']), h('span', {}, [h('i', { style: 'background:var(--struc)' }), '구조'])]),
+    ...has.map((l) => h('div', { class: 'srow' }, [h('span', { class: 'nm' }, [l.name, h('small', { text: fmt(l.count) + '회 첨삭' })]),
+      h('div', { class: 'pair' }, [bar('g', l.grammar, '문법'), bar('s', l.structure, '구조')])])),
+    h('div', { class: 'scale', 'aria-hidden': 'true' }, [h('span'), h('div', {}, ['0', '1', '2', '3', '4', '5'].map((n) => h('span', { text: n })))])
+  ]);
+}
+function render(s) {
+  $('updated').textContent = '최근 업데이트 ' + s.updated + ' (한국 시간)';
+  $('t-total').textContent = fmt(s.total); $('t-week').textContent = fmt(s.week); $('t-today').textContent = fmt(s.today);
+  $('c-days').replaceChildren(days(s.days));
+  $('c-errors').replaceChildren(hbars(s.errors, '회'));
+  $('c-weak').replaceChildren(hbars(s.weak, '회'));
+  $('c-scores').replaceChildren(scores(s.levels));
+  $('c-levels').replaceChildren(hbars(s.levels.map((l) => ({ name: l.name, count: l.count })).filter((l) => l.count), '회', s.total));
+  $('c-types').replaceChildren(hbars(s.types, '회', s.total));
+  $('c-topics').replaceChildren(hbars(s.topics, '회'));
+}
+async function load() {
+  try {
+    const r = await fetch('/api/stats', { cache: 'no-store' }); const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.error) { $('updated').textContent = MSG[d.error] || MSG.sheet_unreachable; return; }
+    render(d);
+  } catch (e) { $('updated').textContent = MSG.sheet_unreachable; }
+}
+
+/* teacher */
+function teacher(s) {
+  const body = $('t-body'); body.hidden = false;
+  const rows = (s.students || []).map((p) => h('tr', {}, [h('td', { text: p.name }), h('td', { class: 'num', text: fmt(p.count) }),
+    h('td', { class: 'num', text: p.grammar == null ? '–' : p.grammar.toFixed(1) }), h('td', { class: 'num', text: p.structure == null ? '–' : p.structure.toFixed(1) }),
+    h('td', { text: p.errors.join(', ') || '–' }), h('td', { text: String(p.last).slice(5, 16) })]));
+  const table = h('div', { class: 'tbl' }, h('table', {}, [h('thead', {}, h('tr', {}, ['이름', '첨삭', '문법 평균', '구조 평균', '자주 나온 오류', '최근'].map((t, i) => h('th', { class: i && i < 4 ? 'num' : '', text: t })))), h('tbody', {}, rows)]));
+  const recent = h('ul', { class: 'recent' }, (s.recent || []).map((r) => h('li', {}, h('details', {}, [
+    h('summary', {}, [h('b', { text: r.name }), h('span', { text: String(r.time).slice(5, 16) + ' · ' + r.level + ' · ' + String(r.topic).replace(/\s*\(.*\)$/, '') + ' · ' + String(r.type).replace(/^자동:\s*/, '') }), h('span', { text: '문법 ' + r.g + ' · 구조 ' + r.s })]),
+    r.errors ? h('p', { class: 'note', text: '오류: ' + r.errors }) : null,
+    h('h4', { text: '학생 글' }), h('div', { class: 'txt', text: r.text }),
+    r.revised ? h('h4', { text: '고쳐 쓴 글' }) : null, r.revised ? h('div', { class: 'txt rev', text: r.revised }) : null]))));
+  body.replaceChildren(
+    h('h3', { class: 'note', text: '학생별 기록 (이름 칸 기준, ' + (s.students || []).length + '명)' }), (s.students || []).length ? table : h('p', { class: 'empty', text: '아직 기록이 없어요.' }),
+    h('h3', { class: 'note', text: '최근 첨삭 30개' }), (s.recent || []).length ? recent : h('p', { class: 'empty', text: '아직 기록이 없어요.' }),
+    h('button', { class: 'btn ghost', type: 'button', id: 't-lock', text: '선생님 화면 닫기' }));
+  body.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+  $('t-lock').onclick = () => { body.hidden = true; body.replaceChildren(); $('t-form').hidden = false; $('pw').value = ''; };
+  $('t-form').hidden = true;
+}
+$('t-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); const st = $('t-status'); st.className = 'note'; st.textContent = '불러오는 중…';
+  try {
+    const r = await fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.error) { st.className = 'note warn'; st.textContent = { wrong_password: '비밀번호가 맞지 않아요.', too_many: '잘못 넣은 횟수가 많아요. 1시간 뒤에 다시 시도해 주세요.', no_password: '선생님 비밀번호가 아직 설정되지 않았어요.' }[d.error] || MSG[d.error] || '불러오지 못했어요.'; return; }
+    st.textContent = ''; teacher(d);
+  } catch (err) { st.className = 'note warn'; st.textContent = '불러오지 못했어요.'; }
+});
+
+load();
+setInterval(() => { if (document.visibilityState === 'visible') load(); }, 120e3);
+</script>
+</body>
+</html>

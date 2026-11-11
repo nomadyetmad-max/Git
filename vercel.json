@@ -1,3 +1,4 @@
 {
-  "functions": { "api/evaluate.js": { "maxDuration": 60 } }
+  "cleanUrls": true,
+  "functions": { "api/evaluate.js": { "maxDuration": 60 }, "api/stats.js": { "maxDuration": 20 } }
 }

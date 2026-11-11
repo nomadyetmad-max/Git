@@ -22,8 +22,11 @@
 | `IP_HOURLY_LIMIT` | 같은 인터넷 주소(학원 와이파이 등)당 1시간 첨삭 횟수 | `60` |
 | `DAILY_LIMIT` | 사이트 전체 하루 첨삭 횟수 | `300` |
 | `LOG_URL` | 첨삭 기록을 받을 구글 Apps Script 웹 앱 주소 (`tools/apps-script.gs`) | 없음 (기록 안 함) |
+| `STATS_PASSWORD` | 통계 화면(/stats)의 선생님 전용 비밀번호 | 없음 |
 | `LOG_SECRET` | Apps Script의 `SECRET`과 같은 값 | 없음 |
 
 API 키가 없거나 GitHub Pages에서 열면 첨삭 버튼 대신 "제출용으로 복사" 안내가 나옵니다.
 
 `LOG_URL`이 있으면 사이트에 "쓴 글과 결과가 선생님께 저장돼요" 안내가 자동으로 표시됩니다.
+
+통계 화면: `/stats` (학생 공개 통계 + 선생님 비밀번호로 학생별 기록). 이름이 '테스트'인 기록은 통계에서 빠집니다.
