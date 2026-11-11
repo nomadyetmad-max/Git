@@ -49,6 +49,9 @@ button, input { font: inherit; color: inherit }
 .out small { font-weight: 500; color: #5b8f6f }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root:not([data-theme="light"]) .out small { color: #86b597 } }
 :root[data-theme="dark"] .out { color: #a9cfb4; background: #233029; border-color: #2f3a33 } :root[data-theme="dark"] .out small { color: #86b597 }
+.count { display: block; width: fit-content; max-width: 100%; line-height: 1.6; background: var(--leaf); color: var(--navy); border-radius: 14px; padding: 6px 14px; font-family: var(--soft); font-size: 14.5px }
+.count b { font-family: var(--serif); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; padding: 0 2px }
+.count small { display: inline-block; white-space: nowrap; font-family: var(--sans); font-size: 12.5px; color: var(--muted); margin-left: 6px }
 .navrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px }
 .navrow .out { margin-bottom: 0 }
 .brand { font-size: 12.5px; font-weight: 700; letter-spacing: .16em; color: var(--blue) }
@@ -181,6 +184,7 @@ details.crit summary { cursor: pointer; font-weight: 700; color: var(--navy) }
 <div class="wrap">
   <div class="navrow"><nav class="tabs" aria-label="Reading Clinic 메뉴"><a href="/reading">수식어 찾기</a><a href="/reading/core" aria-current="page">문장성분 찾기</a></nav><a class="out" href="/" target="_blank" rel="noopener">Writing Clinic <small>영어 글쓰기 첨삭 · 새 창 ↗</small></a></div>
     <header class="top">
+    <p class="count" id="count" hidden>지금까지 <b id="count-n">0</b>번의 게임이 Reading Clinic에서 진행됐어요<small id="count-d"></small></p>
     <h1>Reading Clinic<small>필수 문장성분 찾기 훈련</small></h1>
     <p>모든 영어 문장의 뼈대는 주어, 동사, 목적어, 보어예요. 형식 힌트는 없어요. 문장을 읽고 뼈대를 직접 찾아내는 것까지가 실력이에요.</p>
   </header>
@@ -304,8 +308,14 @@ function renderBoard(el) {
   const list = S.boards[`${S.g}-${S.c}`] || [];
   el.innerHTML = list.length ? list.map((x, i) => `<li><span class="r">${i + 1}</span><span class="n${x.name ? '' : ' none'}">${x.name ? esc(x.name) : '이름 미등록'}</span><span class="s">${x.score}점</span></li>`).join('') : '<li class="empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요.</li>';
 }
+function showPlays(p) {
+  if (!p) return; const n = (p.mod || 0) + (p.core || 0); if (!n) return;
+  $('count-n').textContent = n.toLocaleString('ko-KR');
+  $('count-d').textContent = `수식어 찾기 ${(p.mod || 0).toLocaleString('ko-KR')} · 문장성분 찾기 ${(p.core || 0).toLocaleString('ko-KR')}`;
+  $('count').hidden = false;
+}
 async function loadBoards() {
-  try { const r = await fetch('/api/drill?mode=core'); if (!r.ok) throw 0; S.boards = (await r.json()).boards; S.boardErr = false; }
+  try { const r = await fetch('/api/drill?mode=core'); if (!r.ok) throw 0; const d = await r.json(); S.boards = d.boards; S.boardErr = false; showPlays(d.plays); }
   catch (e) { S.boardErr = true; }
   renderBoard($('board')); renderBoard($('board2'));
 }

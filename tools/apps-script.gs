@@ -52,7 +52,7 @@ function doPost(e) {
 // 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
 function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return out({ ok: Boolean(ss), version: 7, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
+  return out({ ok: Boolean(ss), version: 8, message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
@@ -146,6 +146,7 @@ function drill(d) {
     [1, 2, 3].forEach((g) => [10, 20, 30].forEach((c) => {
       boards[g + '-' + c] = drillSorted(rows, g, c, kind).slice(0, 5).map((x) => ({ name: x.name, score: x.score, correct: x.correct, secs: x.secs, date: String(x.time).slice(0, 10) }));
     }));
-    return { ok: true, boards, mode: kind };
+    const plays = { mod: rows.filter((x) => x.kind === 'mod').length, core: rows.filter((x) => x.kind === 'core').length };
+    return { ok: true, boards, mode: kind, plays };
   } finally { lock.releaseLock(); }
 }

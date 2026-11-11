@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     if (cache[mode] && Date.now() - cachedAt[mode] < 20e3) return res.status(200).json(cache[mode]);
     const d = checkMode(mode, await askSheet({ action: act(mode, 'top'), mode }));
     if (d.error) return res.status(503).json(d);
-    cache[mode] = { boards: d.boards }; cachedAt[mode] = Date.now();
+    cache[mode] = { boards: d.boards, plays: d.plays || null }; cachedAt[mode] = Date.now();
     return res.status(200).json(cache[mode]);
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
