@@ -6,13 +6,18 @@ const HEAD = ['시간', '이름', '레벨', '주제', '글의 종류', '단어 �
 
 function doPost(e) {
   let d;
-  try { d = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false }); }
-  if (!d || d.secret !== SECRET) return out({ ok: false });
+  try { d = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false, reason: 'format' }); }
+  if (!d || String(d.secret).trim() !== SECRET.trim()) { console.log('비밀값이 Vercel의 LOG_SECRET과 다릅니다.'); return out({ ok: false, reason: 'secret' }); }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(SHEET) || ss.insertSheet(SHEET);
   if (sh.getLastRow() === 0) { sh.appendRow(HEAD); sh.setFrozenRows(1); sh.getRange(1, 1, 1, HEAD.length).setFontWeight('bold'); }
   const cell = (v) => { const s = v == null ? '' : String(v); return /^[=+\-@]/.test(s) ? "'" + s : s; };   // 수식 주입 방지
   sh.appendRow([d.time, d.name, d.level, d.topic, d.type, d.words, d.grammar, d.structure, d.errors, d.weak, d.text, d.revised, d.device].map(cell));
   return out({ ok: true });
+}
+// 브라우저로 웹 앱 주소를 열었을 때 연결 상태를 보여 줍니다.
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return out({ ok: Boolean(ss), message: ss ? '연결 준비 완료: ' + ss.getName() : '이 스크립트가 시트에 연결되어 있지 않습니다. 시트의 확장 프로그램 → Apps Script에서 만들어 주세요.', secretSet: SECRET !== '여기에-비밀값-입력' });
 }
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }

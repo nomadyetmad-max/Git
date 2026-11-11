@@ -30,10 +30,12 @@ function allow(ip, device) {
 async function saveLog(row) {
   if (!process.env.LOG_URL) return;
   try {
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 4000);
-    await fetch(process.env.LOG_URL, { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, signal: ctl.signal,
-      body: JSON.stringify(Object.assign({ secret: process.env.LOG_SECRET || '' }, row)) });
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(process.env.LOG_URL.trim(), { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, signal: ctl.signal,
+      body: JSON.stringify(Object.assign({ secret: (process.env.LOG_SECRET || '').trim() }, row)) });
+    const body = await r.text().catch(() => '');
     clearTimeout(timer);
+    if (!/"ok":true/.test(body)) console.error('log not saved', r.status, body.slice(0, 200));
   } catch (e) { console.error('log failed', e && e.name); }
 }
 function parseJson(text) {
