@@ -76,7 +76,7 @@ textarea#passage { width: 100%; min-height: 200px; resize: vertical; border: 1px
     <div class="summary" id="q-sum" hidden></div>
     <div class="cond" id="q-cond"></div>
     <div class="ans" id="q-ans"></div>
-    <div class="actions"><button class="btn primary" id="grade" type="button">채점하기</button><button class="btn" id="again" type="button">다른 문장으로 다시 만들기</button><span class="note" id="gstatus" role="status"></span></div>
+    <div class="actions"><button class="btn primary" id="grade" type="button">채점하기</button><span class="note" id="gstatus" role="status"></span></div>
   </section>
 
   <section class="step" id="r" hidden aria-labelledby="h-r">
@@ -127,17 +127,16 @@ async function make(variant) {
   const st = $('mstatus'); st.className = 'note';
   if (C.countWords(passage) < 40) { st.className = 'note warn'; st.textContent = ERR.too_short; return; }
   S.passage = passage; S.type = type; S.variant = variant;
-  $('make').disabled = true; $('again').disabled = true; st.textContent = '지문을 읽고 핵심 문장을 고르고 있어요. 20초~1분쯤 걸려요.';
+  $('make').disabled = true; st.textContent = '지문을 읽고 핵심 문장을 고르고 있어요. 20초~1분쯤 걸려요.';
   try {
     const r = await fetch('/api/exam', { method: 'POST', headers: headers(), body: JSON.stringify({ op: 'make', passage, type, variant, device: deviceId() }) });
     const d = await r.json().catch(() => ({ error: r.status === 504 ? 'timeout' : 'http_' + r.status }));
     if (!r.ok) { st.className = 'note warn'; st.textContent = (ERR[d.error] || '문항을 만들지 못했어요. 다시 눌러 주세요.') + ` (오류: ${d.error || r.status}${d.detail ? ' · ' + d.detail : ''})`; return; }
     st.textContent = ''; S.item = d; showItem(); loadInfo();
   } catch (e) { st.className = 'note warn'; st.textContent = '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'; }
-  finally { $('make').disabled = false; $('again').disabled = false; }
+  finally { $('make').disabled = false; }
 }
 $('make').onclick = () => make(0);
-$('again').onclick = () => make(Math.min(4, (S.variant || 0) + 1));
 
 // 빈칸 표시를 시험지 모양으로
 const blanks = (s) => esc(s).replace(/\((A|B)\)/g, '<span class="blank">($1)</span>').replace(/_{3,}/g, '<span class="blank long">&nbsp;</span>');
