@@ -92,6 +92,10 @@
   };
   // the lack 수정: 핵심 단어 표시
   FR[3][4].s[1][0] = 'the [lack]';
+  // 예비 고1: 고1과 같은 틀·단어, 수식어는 적게(문장을 짧게), 문장 앞 부사절 없음
+  FR[0] = FR[1];
+  PEOPLE[0] = { np: PEOPLE[1].np, m: ['in my class', 'next door', 'from Busan'] };
+  ADV[0] = { front: ['Yesterday', 'After school', 'On Sunday'], end: ['yesterday', 'after school', 'at home', 'at the park', 'in the morning'] };
 
   // ---- 조각을 토큰으로: role = S/V/O/C 또는 null(수식어), head = 핵심 단어
   function words(str, part, isMod) {
@@ -105,11 +109,13 @@
     if (mods && chance(p)) out = out.concat(words(pick(mods), part, true));
     return out;
   }
-  const PMOD = { 1: [0.35, 0.3], 2: [0.6, 0.5], 3: [0.85, 0.7] };   // [자기 수식어 확률, 사람 수식어 확률]
-  const NADV = { 1: [0.55, 0.15], 2: [0.75, 0.35], 3: [0.85, 0.55] }; // [끝 수식어 확률, 앞 수식어 확률]
+  const PMOD = { 0: [0.15, 0.1], 1: [0.35, 0.3], 2: [0.6, 0.5], 3: [0.85, 0.7] };   // [자기 수식어 확률, 사람 수식어 확률]
+  const NADV = { 0: [0.4, 0.05], 1: [0.55, 0.15], 2: [0.75, 0.35], 3: [0.85, 0.55] }; // [끝 수식어 확률, 앞 수식어 확률]
 
-  function make(g) {
-    const fr = pick(FR[g]);
+  // forms: 이 형식들 중에서만 만들기 (약한 형식 복습용, 선택)
+  function make(g, forms) {
+    const pool = forms && forms.length ? FR[g].filter((x) => forms.includes(x.f)) : FR[g];
+    const fr = pick(pool.length ? pool : FR[g]);
     const sEntry = typeof fr.s === 'function' ? fr.s() : pick(fr.s);
     const isPeople = typeof fr.s === 'function';
     const [pe, pp] = PMOD[g];

@@ -4,10 +4,13 @@
     "api/evaluate.js": {
       "maxDuration": 60
     },
-    "api/stats.js": {
+    "api/drill.js": {
       "maxDuration": 20
     },
-    "api/drill.js": {
+    "api/assist.js": {
+      "maxDuration": 20
+    },
+    "api/stats.js": {
       "maxDuration": 20
     }
   },
