@@ -132,18 +132,46 @@ const CONFIG_ROWS = [
   ['도우미: Intermediate 멈춤 시간(초)', 18, '', 'assistI'],
   ['도우미: Advanced 멈춤 시간(초)', 25, '', 'assistA'],
   ['도우미: "괜찮아요"를 누를 때 늘리는 초', 3, '학생 기기마다 자동 조정(기본값의 절반~두 배 사이)', 'assistStep'],
-  ['도우미: 켜기(1) / 끄기(0)', 1, '0이면 Writing 도우미가 나타나지 않음', 'assistOn'],
+  ['도우미: 켜기(1) / 끄기(0)', 1, '0이면 Writing 실시간 도우미(문법 교정·표현 추천)가 나타나지 않음', 'assistOn'],
+  ['내신 서술형: 하루 문항 만들기(회)', 5, '기기당. 같은 지문·유형으로 이미 만든 문항은 횟수에 안 들어감. 암호 확인한 기기는 무제한', 'examMake'],
+  ['내신 서술형: 하루 채점(회)', 20, '기기당. 같은 답을 다시 채점하면 횟수에 안 들어감', 'examGrade'],
   ['알림: Writing 하루 첨삭 경고(회)', 200, '하루 첨삭이 이 횟수를 넘으면 메일(비용 확인용)', 'writingWarn'],
   ['알림: Reading 기록이 끊긴 시간', 24, '이 시간 동안 기록이 하나도 없으면(평소엔 있었는데) 메일', 'quietHours'],
   ['브리핑 받을 메일', '', '비워 두면 이 스크립트 주인의 메일', 'mail']
 ];
-const PUBLIC_KEYS = ['minN', 'master', 'recent', 'assistB', 'assistI', 'assistA', 'assistStep', 'assistOn'];
+const PUBLIC_KEYS = ['minN', 'master', 'recent', 'assistB', 'assistI', 'assistA', 'assistStep', 'assistOn', 'examMake', 'examGrade'];
 const READ_ACTIONS = {
   read_info: () => ({ ok: true, plays: readPlays(), config: pick(readConfig(), PUBLIC_KEYS) }),
   read_log: (d) => readLog(d),
   learner_join: (d) => learnerJoin(d),
-  assist_log: (d) => assistLog(d)
+  assist_log: (d) => assistLog(d),
+  cache_put: (d) => cachePut(d),
+  exam_log: (d) => examLog(d),
+  exam_quota: (d) => examQuota(d)
 };
+// ---- 같은 입력 = 같은 결과: "저장된 결과" 탭에 보관 (첨삭 결과와 같은 탭, 꺼낼 때는 기존 'get')
+function cachePut(d) {
+  const sv = tab(SAVED, ['글 식별값', '처음 첨삭 시간', '결과(JSON)']);
+  const lock = LockService.getScriptLock(); lock.waitLock(5000);
+  try {
+    const dup = sv.getLastRow() > 1 && sv.getRange('A:A').createTextFinder(String(d.key)).matchEntireCell(true).findNext();
+    if (!dup) sv.appendRow([String(d.key), asText(d.time), "'" + String(d.value)]);
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+// ---- 내신 서술형: 문항 만들기·채점 기록, 기기별 오늘 횟수
+const EXAM = '서술형 기록', EXAM_HEAD = ['시간', '종류', '기기', '유형', '지문 단어 수', '대상 문장', '문항(JSON)', '학생 답', '판정'];
+function examLog(d) {
+  tab(EXAM, EXAM_HEAD).appendRow([asText(d.time), d.kind === 'grade' ? '채점' : '문항', asText(d.device), d.type, d.words, d.target, d.item, d.answers, d.marks].map((v, i) => (i === 0 || i === 2 ? v : safeCell(v))));
+  return { ok: true };
+}
+function examQuota(d) {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXAM), r = { ok: true, make: 0, grade: 0 };
+  if (!sh || sh.getLastRow() < 2) return r;
+  const from = Math.max(2, sh.getLastRow() - 3000 + 1), v = sh.getRange(from, 1, sh.getLastRow() - from + 1, 3).getDisplayValues();
+  v.forEach((x) => { if (String(x[0]).slice(0, 10) === d.date && String(x[2]) === String(d.device)) { if (x[1] === '채점') r.grade++; else r.make++; } });
+  return r;
+}
 function pick(o, keys) { const r = {}; keys.forEach((k) => { if (k in o) r[k] = o[k]; }); return r; }
 function safeCell(v) { const s = v == null ? '' : String(v); return /^[=+\-@]/.test(s) ? "'" + s : s; }
 function tab(name, head) {
@@ -334,6 +362,14 @@ function weeklyData() {
     const l = arows.filter((r) => r[1] === lv && r[2] === 'check'), c = (a) => l.filter((r) => r[3] === a).length, res = l.filter((r) => r[3] === 'result');
     return { level: { B: 'Basic', I: 'Intermediate', A: 'Advanced' }[lv], nSeconds: cfg['assist' + lv], shown: c('shown'), accept: c('accept'), decline: c('decline'), ignore: c('ignore'), acceptRate: pct(c('accept'), c('shown')), hintGiven: res.filter((r) => r[5] === '0').length };
   });
+  // 내신 서술형
+  const esh = ss.getSheetByName(EXAM), erows = esh && esh.getLastRow() > 1 ? esh.getRange(2, 1, esh.getLastRow() - 1, 9).getDisplayValues().filter((r) => inW(r[0], from, to)) : [];
+  const grades = erows.filter((r) => r[1] === '채점'), marks = grades.map((r) => String(r[8]).split(' ')).reduce((a, x) => a.concat(x), []).filter(Boolean);
+  out.exam = { made: erows.filter((r) => r[1] === '문항').length, graded: grades.length, users: Object.keys(group(erows, (r) => r[2])).length,
+    byType: [1, 2, 3].map((t) => { const g = grades.filter((r) => String(r[3]) === String(t)), m = g.map((r) => String(r[8]).split(' ')).reduce((a, x) => a.concat(x), []).filter(Boolean);
+      return { type: t, graded: g.length, o: pct(m.filter((x) => /:o/.test(x)).length, m.length), condFail: pct(m.filter((x) => /:cond/.test(x)).length, m.length) }; }),
+    condFail: pct(marks.filter((x) => /:cond/.test(x)).length, marks.length) };
+  if (out.exam.condFail !== null && marks.length >= minN && out.exam.condFail >= 30) out.questions.push(`[서술형] 채점한 빈칸의 ${out.exam.condFail}%가 조건(핵심 단어·단어 수)을 지키지 않았어요. 조건을 읽는 연습을 수업에서 다룰까요?`);
   // 지난 2주의 결정 기록
   const dsh = tab(DECIDE, ['날짜', '결정한 것', '확인할 지표', '결과 메모']);
   out.decisions = rows(dsh, 4).filter((r) => r[0] && kstStr(new Date(new Date(r[0]).getTime() + 9 * 3600e3)) >= prevFrom).map((r) => ({ date: Utilities.formatDate(new Date(r[0]), 'Asia/Seoul', 'yyyy-MM-dd'), what: String(r[1]), watch: String(r[2]) }));
@@ -381,6 +417,9 @@ function briefHtml(D, story) {
     '자주 나온 오류: ' + (Wr.topErrors.map((x) => `${x.error} ${x.n}`).join(' · ') || '–'),
     ...D.assist.map((a) => `도우미 ${a.level} (멈춤 ${a.nSeconds}초): 제안 ${a.shown} · 받음 ${a.accept} · 괜찮아요 ${a.decline} · 무시 ${a.ignore} · 수락률 ${e(a.acceptRate)}% · 힌트 준 문장 ${a.hintGiven}`)
   ].map(e)));
+  const X = D.exam || { byType: [] }, TN = { 1: '문장 속 (A)(B)', 2: '요약문 (A)(B)', 3: '빈칸 쓰기' };
+  sec.push('<h3>내신 서술형 대비</h3>' + ul([`문항 만들기 ${e(X.made)} · 채점 ${e(X.graded)} · 이용 기기 ${e(X.users)} · 조건 위반 ${e(X.condFail)}%`,
+    '유형별: ' + (X.byType.filter((t) => t.graded).map((t) => `${TN[t.type]} 채점 ${t.graded}, ○ ${t.o}%, 조건 위반 ${t.condFail}%`).join(' · ') || '–')].map(e)));
   sec.push('<h3>지난 결정</h3>' + (D.decisions.length ? ul(D.decisions.map((x) => e(`${x.date} · ${x.what}` + (x.watch ? ` → 확인할 지표: ${x.watch}` : '')))) : '<p>"결정 기록" 탭에 이번 주에 바꾸기로 한 것을 한 줄 적어 두면, 다음 브리핑에서 함께 보여 줘요.</p>'));
   return `<div style="font-family:sans-serif;font-size:14px;line-height:1.6"><h2>Reading · Writing Clinic 주간 브리핑</h2><p>${e(D.period)} (한국 시간)</p>${sec.join('')}<p style="color:#888">기준은 시트의 "분석 기준" 탭에서 바꿀 수 있어요.</p></div>`;
 }

@@ -1,0 +1,203 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="지문을 넣으면 핵심 문장으로 내신 서술형 문항(빈칸·요약문)을 만들고, 조건(핵심 단어·단어 수)까지 채점하는 연습장">
+<title>내신 서술형 대비 · Writing Clinic</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&display=swap">
+<link rel="stylesheet" href="/writing.css">
+<style>
+/* 내신 서술형: 시험지처럼. 지문은 원고지 위 한 단락, 빈칸은 굵은 밑줄, 조건은 테두리 상자 */
+textarea#passage { width: 100%; min-height: 200px; resize: vertical; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-family: var(--serif); font-size: 16px; line-height: 1.75; background: var(--bg); color: var(--ink) }
+.types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px }
+@media (max-width: 760px) { .types { grid-template-columns: minmax(0, 1fr) } }
+.types label { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 4px }
+.types input { position: absolute; opacity: 0; inset: 0; cursor: pointer }
+.types label:has(input:checked) { border-color: var(--navy); background: var(--sel) }
+.types label:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px }
+.types .nm { font-weight: 700; color: var(--navy) }
+.types .say { font-size: 13px; color: var(--muted); line-height: 1.6 }
+.q-head { font-weight: 700 }
+.paper { font-family: var(--serif); font-size: 16.5px; line-height: 1.9; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; text-wrap: pretty }
+.paper .tg { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px }
+.blank { display: inline-block; min-width: 3.4em; border-bottom: 2px solid var(--ink); text-align: center; font-family: var(--sans); font-size: 13px; font-weight: 700; line-height: 1.4 }
+.blank.long { min-width: 9em }
+.summary { border: 1.5px solid var(--ink); border-radius: 4px; padding: 12px 16px; font-family: var(--serif); font-size: 16.5px; line-height: 1.9; background: var(--paper) }
+.summary .arrow { display: block; text-align: center; font-size: 20px; line-height: 1; color: var(--muted); margin-bottom: 6px }
+.cond { border: 1px solid var(--ink); border-radius: 4px; padding: 10px 14px; background: var(--paper); font-size: 14.5px }
+.cond b.t { display: inline-block; margin-bottom: 4px }
+.cond ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 2px }
+.cond .kw { font-family: var(--serif); font-weight: 600; background: var(--hl); color: var(--hl-ink); border-radius: 4px; padding: 0 5px }
+.ans { display: flex; flex-direction: column; gap: 12px }
+.ans label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; color: var(--navy) }
+.ans input { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-family: var(--serif); font-size: 16px; background: var(--bg); color: var(--ink); font-weight: 400 }
+.live { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12.5px; font-weight: 500 }
+.live span { flex: none; white-space: nowrap; line-height: 1.6; border-radius: 99px; padding: 1px 9px; background: var(--band); color: var(--muted) }
+.live span.yes { background: var(--leaf); color: var(--ok) } .live span.nope { background: var(--pen-bg); color: var(--pen) }
+.res { display: flex; flex-direction: column; gap: 12px }
+.res li { list-style: none; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--paper) }
+.res ol { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px }
+.mark { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1 }
+.mark.o { color: var(--ok) } .mark.partial { color: var(--mid) } .mark.x { color: var(--pen) }
+.rhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
+.rhead .mine { font-family: var(--serif); font-size: 16px }
+.model { font-family: var(--serif); font-size: 16px; color: var(--navy) }
+.box { background: var(--band); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: flex; flex-direction: column; gap: 6px }
+.box b { color: var(--navy) }
+.quota { font-size: 13px; color: var(--muted) }
+.wc { font-size: 13px; color: var(--muted) }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="navrow"><nav class="tabs" aria-label="메뉴"><a href="/writing">글쓰기</a><a href="/writing/exam" aria-current="page">내신 서술형 대비</a><a href="/stats">통계</a></nav><a class="out" href="/">Reading Clinic 홈 <small>수식어 · 문장성분 찾기</small></a></div>
+  <div class="top">
+    <h1>Writing Clinic<small>내신 서술형 대비</small></h1>
+    <p>공부하는 지문을 넣으면, 모의고사 출제 기준으로 핵심 문장을 골라 서술형 문항을 만들어요. 실제 시험처럼 <b>핵심 단어</b>와 <b>단어 수</b> 조건이 붙고, 답을 쓰면 조건과 뜻을 함께 채점해요.</p>
+  </div>
+
+  <section class="step" aria-labelledby="h-p">
+    <header><span class="no">1</span><h2 id="h-p">지문 넣기</h2><span class="sub" id="pwc"></span></header>
+    <p class="lead">교과서, 부교재, 모의고사 지문 하나를 그대로 붙여 넣으세요. 40~450단어 영어 지문이면 돼요. 넣은 지문은 이 기기에 저장돼요.</p>
+    <textarea id="passage" spellcheck="false" aria-label="영어 지문" placeholder="Paste one English passage here."></textarea>
+  </section>
+
+  <section class="step" aria-labelledby="h-t">
+    <header><span class="no">2</span><h2 id="h-t">연습 유형</h2></header>
+    <div class="types" role="radiogroup" aria-labelledby="h-t">
+      <label><input type="radio" name="type" value="1" checked><span class="nm">① 문장 속 (A)(B) 빈칸</span><span class="say">핵심 문장의 두 부분을 비워요. 각 빈칸을 짧게(2~10단어) 써요.</span></label>
+      <label><input type="radio" name="type" value="2"><span class="nm">② 요약문 (A)(B)</span><span class="say">지문은 그대로 두고, 모의고사 40번처럼 아래 요약문의 빈칸을 채워요.</span></label>
+      <label><input type="radio" name="type" value="3"><span class="nm">③ 핵심 문장 빈칸 쓰기</span><span class="say">중요한 문장의 핵심 부분을 비워요. 그 부분을 조건에 맞게 직접 써요.</span></label>
+    </div>
+    <div class="actions"><button class="btn primary" id="make" type="button">문항 만들기</button><span class="quota" id="quota"></span><span class="note" id="mstatus" role="status"></span></div>
+  </section>
+
+  <section class="step" id="q" hidden aria-labelledby="h-q" aria-live="polite">
+    <header><span class="no">3</span><h2 id="h-q">문항</h2><span class="sub" id="q-type"></span></header>
+    <p class="q-head" id="q-ask"></p>
+    <div class="paper" id="q-paper"></div>
+    <div class="summary" id="q-sum" hidden></div>
+    <div class="cond" id="q-cond"></div>
+    <div class="ans" id="q-ans"></div>
+    <div class="actions"><button class="btn primary" id="grade" type="button">채점하기</button><button class="btn" id="again" type="button">다른 문장으로 다시 만들기</button><span class="note" id="gstatus" role="status"></span></div>
+  </section>
+
+  <section class="step" id="r" hidden aria-labelledby="h-r">
+    <header><span class="no">4</span><h2 id="h-r">채점 결과</h2></header>
+    <div class="res"><ol id="r-list"></ol></div>
+    <div class="box" id="r-box"></div>
+    <div class="actions"><button class="btn" id="retry" type="button">답 고쳐서 다시 채점하기</button></div>
+  </section>
+
+  <footer class="foot">
+    <p>조건을 지키는 것까지가 서술형 실력이에요.</p>
+    <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
+  </footer>
+</div>
+<script src="/exam-cond.js"></script>
+<script>
+const $ = (id) => document.getElementById(id), C = window.EXAMCOND;
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function store(k, v) { try { if (v === undefined) return localStorage.getItem('wc.' + k); localStorage.setItem('wc.' + k, v); } catch (e) { return null; } }
+function deviceId() { let d = store('device'); if (!d || !/^[a-z0-9]{8,40}$/.test(d)) { d = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); store('device', d); } return d; }
+const headers = () => ({ 'content-type': 'application/json', 'x-wc-pass': store('pass') || '' });
+const TYPE = { 1: '문장 속 (A)(B) 빈칸', 2: '요약문 (A)(B)', 3: '핵심 문장 빈칸 쓰기' };
+const ASK = {
+  1: '다음 글의 밑줄 친 문장의 빈칸 (A), (B)에 들어갈 말을 <조건>에 맞게 쓰시오.',
+  2: '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말을 <조건>에 맞게 쓰시오.',
+  3: '다음 글의 빈칸에 들어갈 말을 <조건>에 맞게 쓰시오.'
+};
+const S = { item: null, passage: '', type: 1, variant: 0, info: null };
+
+// ---- 1. 지문
+function pwc() { const n = C.countWords($('passage').value); $('pwc').textContent = n ? n + '단어' : ''; }
+$('passage').value = store('exam.passage') || '';
+$('passage').addEventListener('input', () => { pwc(); store('exam.passage', $('passage').value); });
+pwc();
+// ---- 횟수
+async function loadInfo() {
+  try {
+    const r = await fetch('/api/exam?device=' + deviceId(), { headers: headers() }); const d = r.ok ? await r.json() : null; S.info = d;
+    if (!d || !d.ready) { $('quota').textContent = '지금은 문항을 만들 수 없어요.'; $('make').disabled = true; return; }
+    $('quota').textContent = d.unlimited ? '횟수 제한 없음' : d.used ? `오늘 남은 횟수: 문항 ${Math.max(0, d.limit.make - d.used.make)}/${d.limit.make} · 채점 ${Math.max(0, d.limit.grade - d.used.grade)}/${d.limit.grade}` : '';
+  } catch (e) { $('quota').textContent = ''; }
+}
+const ERR = { too_short: '지문이 너무 짧아요. 40단어 이상인 지문을 넣어 주세요.', too_long: '지문이 너무 길어요. 450단어 이하로 한 지문만 넣어 주세요.', daily_limit: '오늘 횟수를 모두 썼어요. 내일 다시 하거나, 선생님께 받은 비밀번호를 글쓰기 화면의 "암호 확인"에 넣어 주세요.', busy: '지금 요청이 많아요. 잠시 뒤 다시 눌러 주세요.', too_many: '잠깐 쉬었다가 해 주세요.', bad_item: '문항 정보가 바뀌었어요. 문항을 다시 만들어 주세요.', empty: '답을 먼저 써 주세요.' };
+
+// ---- 2. 문항 만들기
+async function make(variant) {
+  const passage = $('passage').value.replace(/\s+/g, ' ').trim(), type = Number(document.querySelector('input[name="type"]:checked').value);
+  const st = $('mstatus'); st.className = 'note';
+  if (C.countWords(passage) < 40) { st.className = 'note warn'; st.textContent = ERR.too_short; return; }
+  S.passage = passage; S.type = type; S.variant = variant;
+  $('make').disabled = true; $('again').disabled = true; st.textContent = '지문을 읽고 핵심 문장을 고르고 있어요. 20초~1분쯤 걸려요.';
+  try {
+    const r = await fetch('/api/exam', { method: 'POST', headers: headers(), body: JSON.stringify({ op: 'make', passage, type, variant, device: deviceId() }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { st.className = 'note warn'; st.textContent = ERR[d.error] || '문항을 만들지 못했어요. 다시 눌러 주세요.'; return; }
+    st.textContent = ''; S.item = d; showItem(); loadInfo();
+  } catch (e) { st.className = 'note warn'; st.textContent = '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'; }
+  finally { $('make').disabled = false; $('again').disabled = false; }
+}
+$('make').onclick = () => make(0);
+$('again').onclick = () => make(Math.min(4, (S.variant || 0) + 1));
+
+// 빈칸 표시를 시험지 모양으로
+const blanks = (s) => esc(s).replace(/\((A|B)\)/g, '<span class="blank">($1)</span>').replace(/_{3,}/g, '<span class="blank long">&nbsp;</span>');
+function showItem() {
+  const it = S.item, P = esc(S.passage);
+  $('q').hidden = false; $('r').hidden = true;
+  $('q-type').textContent = TYPE[it.type]; $('q-ask').textContent = ASK[it.type];
+  if (it.type === 2) { $('q-paper').innerHTML = P; $('q-sum').hidden = false; $('q-sum').innerHTML = '<span class="arrow">↓</span>' + blanks(it.display); }
+  else {
+    $('q-sum').hidden = true;
+    const i = S.passage.indexOf(it.target);
+    $('q-paper').innerHTML = i < 0 ? P : esc(S.passage.slice(0, i)) + '<span class="tg">' + blanks(it.display) + '</span>' + esc(S.passage.slice(i + it.target.length));
+  }
+  // <조건>: 핵심 단어, 단어 수 (빈칸마다)
+  const L = (b) => (b.label ? `(${b.label})` : '빈칸');
+  const kw = it.blanks.map((b) => (it.blanks.length > 1 ? `${L(b)} ` : '') + b.keywords.map((k) => `<span class="kw">${esc(k)}</span>`).join(', ')).join(' / ');
+  const mw = it.blanks.length > 1 && it.blanks.every((b) => b.maxWords === it.blanks[0].maxWords) ? `각 빈칸은 ${it.blanks[0].maxWords}단어 이하로 쓰시오.` : it.blanks.map((b) => `${L(b)} ${b.maxWords}단어 이하`).join(', ') + '로 쓰시오.';
+  $('q-cond').innerHTML = `<b class="t">&lt;조건&gt;</b><ol><li>다음 핵심 단어를 사용하시오: ${kw} (필요하면 어형을 바꿀 것)</li><li>${mw}</li></ol>`;
+  $('q-ans').innerHTML = it.blanks.map((b, i) => `<label>${b.label ? '(' + b.label + ')' : '빈칸'}<input data-i="${i}" autocomplete="off" spellcheck="false"><span class="live" id="live${i}"></span></label>`).join('');
+  $('q-ans').querySelectorAll('input').forEach((inp) => { const saved = store('exam.ans.' + it.sig + '.' + inp.dataset.i); if (saved) inp.value = saved; inp.addEventListener('input', () => { live(+inp.dataset.i); store('exam.ans.' + it.sig + '.' + inp.dataset.i, inp.value); }); live(+inp.dataset.i); });
+  $('gstatus').textContent = '';
+  $('q').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+// 쓰는 동안 조건을 바로 확인 (단어 수, 핵심 단어)
+function live(i) {
+  const b = S.item.blanks[i], v = $('q-ans').querySelector(`input[data-i="${i}"]`).value, c = C.check(v, b);
+  $('live' + i).innerHTML = (v.trim() ? `<span class="${c.words.ok ? 'yes' : 'nope'}">${c.words.n} / ${b.maxWords}단어</span>` : `<span>${b.maxWords}단어 이하</span>`)
+    + c.keywords.map((k) => `<span class="${v.trim() ? (k.ok ? 'yes' : 'nope') : ''}">${esc(k.k)} ${v.trim() ? (k.ok ? '사용' : '없음') : ''}</span>`).join('');
+}
+
+// ---- 3. 채점
+async function grade() {
+  const it = S.item, answers = {}, st = $('gstatus'); st.className = 'note';
+  it.blanks.forEach((b, i) => { answers[b.label] = $('q-ans').querySelector(`input[data-i="${i}"]`).value.trim(); });
+  if (Object.values(answers).every((x) => !x)) { st.className = 'note warn'; st.textContent = ERR.empty; return; }
+  $('grade').disabled = true; st.textContent = '채점하고 있어요…';
+  try {
+    const r = await fetch('/api/exam', { method: 'POST', headers: headers(), body: JSON.stringify({ op: 'grade', passage: S.passage, item: it, answers, device: deviceId() }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { st.className = 'note warn'; st.textContent = ERR[d.error] || '채점하지 못했어요. 다시 눌러 주세요.'; return; }
+    st.textContent = ''; showResult(d); loadInfo();
+  } catch (e) { st.className = 'note warn'; st.textContent = '서버에 연결하지 못했어요.'; }
+  finally { $('grade').disabled = false; }
+}
+$('grade').onclick = grade;
+const MARK = { o: '○', partial: '△', x: '×' }, MEANING = { o: '뜻 맞음', partial: '뜻 일부만 맞음', x: '뜻이 다름' };
+function showResult(d) {
+  const it = S.item;
+  $('r-list').innerHTML = d.blanks.map((r, i) => {
+    const b = it.blanks[i], c = r.cond;
+    const conds = [`단어 수 ${c.words.n}/${c.words.max} ${c.words.ok ? '○' : '× (조건 위반)'}`].concat(c.keywords.map((k) => `핵심 단어 '${esc(k.k)}' ${k.ok ? '○' : '× (조건 위반)'}`));
+    return `<li><div class="rhead"><span class="mark ${r.mark}">${MARK[r.mark]}</span><b>${b.label ? '(' + b.label + ')' : '빈칸'}</b><span class="mine">${esc(r.answer) || '(빈 답)'}</span></div>`
+      + `<p class="live"><span class="${r.meaning === 'o' ? 'yes' : 'nope'}">${MEANING[r.meaning]}</span><span class="${r.grammar === 'o' ? 'yes' : 'nope'}">${r.grammar === 'o' ? '어법 맞음' : '어법 오류'}</span>${conds.map((x) => `<span class="${/○/.test(x) ? 'yes' : 'nope'}">${x}</span>`).join('')}</p>`
+      + (r.ko ? `<p>${esc(r.ko)}</p>` : '')
+      + `<p>모범 답안: <span class="model">${esc(b.answer)}</span>${b.accept && b.accept.length ? ` <span class="note">(다른 정답 예: ${b.accept.map(esc).join(' / ')})</span>` : ''}</p></li>`;
+  }).join('');
+  $('r-box').innerHTML = `<p><b>완성된 문장</b> <span class="model">${esc(it.target)}</span></p>${it.ko ? `<p><b>해석</b> ${esc(it.ko)}</p>` : ''}${it.explain ? `<p><b>해설</b> ${esc(it.explain)}</p>` : ''}${it.why ? `<p><b>이 문장을 고른 이유</b> ${esc(it.why)}</p>` : ''}<p class="note">○ 뜻·어법·조건이 모두 맞음 · △ 뜻 일부만 맞거나 어법 오류, 또는 조건 위반(실제 시험처럼 감점) · × 뜻이 다르거나 빈 답</p>`;
+  $('r').hidden = false; $('r').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+$('retry').onclick = () => { $('r').hidden = true; $('q-ans').querySelector('input').focus(); };
+loadInfo();
+</script>
+</body></html>

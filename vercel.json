@@ -12,6 +12,9 @@
     },
     "api/stats.js": {
       "maxDuration": 20
+    },
+    "api/exam.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -22,6 +25,10 @@
     {
       "source": "/reading/core",
       "destination": "/core"
+    },
+    {
+      "source": "/writing/exam",
+      "destination": "/exam"
     }
   ]
 }

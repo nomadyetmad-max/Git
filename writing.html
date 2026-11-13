@@ -2,232 +2,10 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&display=swap">
-<style>
-/* Layout: a calm notebook in four numbered steps on ivory paper with forest-green ink; the hint words sit beside the writing area on wide screens.
-   Each step opens with a short note to the student. The result is the student's own text marked like a corrected manuscript: red pen for grammar, teal for structure. */
-:root {
-  --bg: #f6f2e7; --paper: #fffdf6; --ink: #24312a; --muted: #6c7369; --line: #e3dccb;
-  --navy: #2f5d46; --blue: #5b8f6f; --band: #edf0e2; --sel: #e7efdf; --on-navy: #fffdf6;
-  --pen: #b44a37; --pen-bg: #f8e6df; --flow: #2c6e7a; --flow-bg: #e0eeee;
-  --hl: #f3e3a2; --hl-ink: #4a3c08; --ok: #3d7a4f; --mid: #95701c; --rule: #ece5d4; --leaf: #dfe9d6; --shadow: rgba(47, 93, 70, .07);
-  --sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --soft: 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', serif;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
-  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --sel: #26372d; --on-navy: #151b17;
-  --pen: #ec9c8a; --pen-bg: #3b2621; --flow: #86c7d0; --flow-bg: #1b3236;
-  --hl: #5d5320; --hl-ink: #fbf0c4; --ok: #93d3a4; --mid: #dfbd6a; --rule: #28322c; --leaf: #26372d; --shadow: rgba(0, 0, 0, .25); color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #151b17; --paper: #1d2520; --ink: #e8e6dc; --muted: #a3a99d; --line: #2f3a33;
-  --navy: #a9cfb4; --blue: #86b597; --band: #233029; --sel: #26372d; --on-navy: #151b17;
-  --pen: #ec9c8a; --pen-bg: #3b2621; --flow: #86c7d0; --flow-bg: #1b3236;
-  --hl: #5d5320; --hl-ink: #fbf0c4; --ok: #93d3a4; --mid: #dfbd6a; --rule: #28322c; --leaf: #26372d; --shadow: rgba(0, 0, 0, .25); color-scheme: dark }
-
-* { box-sizing: border-box }
-[hidden] { display: none !important }
-body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; word-break: keep-all }
-.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 22px }
-h1, h2, h3, p { margin: 0 }
-button, input, select, textarea { font: inherit; color: inherit }
-:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
-
-.top { display: flex; flex-direction: column; gap: 8px; padding-block: 6px 2px }
-.top h1 { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; line-height: 1.1; letter-spacing: -.01em; color: var(--navy) }
-.top h1 small { display: block; font-family: var(--soft); font-size: 15px; font-weight: 400; color: var(--blue); letter-spacing: 0; margin-top: 6px }
-.top p { color: var(--ink); font-family: var(--soft); font-size: 16px; line-height: 1.8; max-width: 62ch; text-wrap: pretty }
-.count { display: block; width: fit-content; max-width: 100%; line-height: 1.6; background: var(--leaf); color: var(--navy); border-radius: 14px; padding: 6px 14px; font-family: var(--soft); font-size: 14.5px }
-.count b { font-family: var(--serif); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; padding: 0 2px }
-.navrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px }
-.out { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 700; font-size: 14px; color: #1f5f63; background: #e2eeec; border: 1px solid #c9dcd8; border-radius: 99px; padding: 8px 16px; white-space: nowrap }
-.out:hover { background: #d4e7e4 }
-.out small { font-weight: 500; color: #4d7d80 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .out { color: #9fd0d2; background: #1a3132; border-color: #284647 } :root:not([data-theme="light"]) .out small { color: #7fb1b3 } }
-:root[data-theme="dark"] .out { color: #9fd0d2; background: #1a3132; border-color: #284647 } :root[data-theme="dark"] .out small { color: #7fb1b3 }
-.tabs { display: flex; gap: 4px; width: fit-content; max-width: 100%; background: var(--band); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
-.tabs a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 8px 22px; border-radius: 99px; white-space: nowrap }
-.tabs a:hover { color: var(--navy) }
-.tabs a[aria-current="page"] { background: var(--paper); color: var(--navy); box-shadow: 0 1px 6px var(--shadow) }
-.lead { font-family: var(--soft); font-size: 14.5px; line-height: 1.8; color: var(--muted); max-width: 64ch; text-wrap: pretty }
-
-.step { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 2px 14px var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0 }
-.step > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px }
-.step .no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--leaf); color: var(--navy); font-family: var(--serif); font-weight: 600; font-size: 14px; align-self: center }
-.step h2 { font-family: var(--soft); font-size: 19px; font-weight: 700; color: var(--navy) }
-.step > header { align-items: center }
-.step .sub { color: var(--muted); font-size: 13px }
-
-/* 1. level */
-.levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px }
-.levels label { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
-.levels input { position: absolute; opacity: 0; inset: 0; cursor: pointer }
-.levels label:has(input:checked) { border-color: var(--navy); background: var(--sel) }
-.levels label:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px }
-.levels .nm { font-family: var(--serif); font-weight: 500; font-size: 20px; color: var(--navy) }
-.levels .say { font-family: var(--soft); font-size: 13px; color: var(--ink); line-height: 1.6 }
-.levels dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; font-size: 12.5px; color: var(--muted) }
-.levels dt { font-weight: 700; color: var(--ink) }
-.levels dd { margin: 0 }
-
-/* 2-3. topic, hints, writing */
-.work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 22px; align-items: start }
-.col { display: flex; flex-direction: column; gap: 22px; min-width: 0 }
-.topic { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px }
-.topic .word { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px }
-.topic .en { font-family: var(--serif); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: 40px; overflow-wrap: anywhere; line-height: 1.1; color: var(--navy) }
-.topic .ko { font-size: 16px; color: var(--muted) }
-.btn { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 8px 16px; cursor: pointer; font-weight: 500; font-size: 14px }
-.btn:hover { border-color: var(--blue) }
-.btn.primary { background: var(--navy); border-color: var(--navy); color: var(--on-navy); font-weight: 700; padding: 11px 24px; font-size: 15px }
-.btn.ghost { border-color: transparent; background: var(--band); color: var(--navy) }
-.btn[disabled] { opacity: .55; cursor: default }
-
-.hints { position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)) }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0 }
-.chips li { border: 1px solid var(--line); border-radius: 99px; font-size: 13px; line-height: 1.5; background: var(--paper) }
-.chips li:hover { border-color: var(--blue) }
-.chips button { all: unset; box-sizing: border-box; display: block; padding: 3px 11px; cursor: pointer; border-radius: 99px }
-.chips button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
-.chips li b { font-family: var(--serif); font-weight: 600; font-size: 14.5px }
-.chips li span { color: var(--muted); margin-left: 5px; font-size: 12px }
-.chips li.used { background: var(--hl); border-color: var(--hl); color: var(--hl-ink) }
-.chips li.used span { color: var(--hl-ink) }
-
-.fields { display: flex; flex-wrap: wrap; gap: 10px 14px }
-.fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); min-width: 0 }
-.fields input, .fields select { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 7px 10px; font-size: 14px; color: var(--ink); max-width: 100% }
-textarea#text { width: 100%; min-height: 264px; resize: vertical; border: 1px solid var(--line); border-radius: 14px; padding: 9px 14px 12px;
-  font-family: var(--serif); font-size: 17px; line-height: 30px; color: var(--ink); background-color: var(--bg);
-  background-image: linear-gradient(to bottom, transparent 29px, var(--rule) 29px); background-size: 100% 30px; background-attachment: local; background-position: 0 9px }
-.meter { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
-.meter b { color: var(--ink); font-weight: 700 }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px }
-.note { font-size: 13px; color: var(--muted) }
-.note.warn { color: var(--pen) }
-/* 실시간 도우미: 글을 쓰다 멈추면 원고지 아래에 작은 쪽지가 뜬다 */
-.assist { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--leaf); border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 12px; padding: 10px 14px; font-size: 14px }
-.assist p { flex: 1 1 260px; margin: 0 }
-.assist .as-act { display: flex; gap: 8px }
-.assist .as-act button { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 5px 14px; font: inherit; font-weight: 700; color: var(--navy); cursor: pointer }
-.assist .as-act button.go { background: var(--navy); border-color: var(--navy); color: var(--on-navy) }
-.assist q { font-family: Georgia, serif; background: var(--pen-bg); color: var(--pen); border-radius: 4px; padding: 0 4px; quotes: none }
-.assist.good { border-left-color: var(--ok) }
-.as-toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer }
-.offline { background: var(--band); padding: 12px 16px; font-size: 13.5px; line-height: 1.7; border-radius: 14px }
-
-/* 4. result */
-.result { gap: 18px }
-#result-body { display: flex; flex-direction: column; gap: 16px; min-width: 0 }
-.tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .04em; border-radius: 99px; padding: 1px 7px; background: var(--band); color: var(--navy) }
-.tag.ex { background: var(--hl); color: var(--hl-ink) }
-.scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px }
-.score { border-top: 3px solid var(--pen); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
-.score.s { border-top-color: var(--flow) }
-.score .hd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px }
-.score .hd b { font-size: 15px }
-.score .hd span { font-family: var(--serif); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums }
-.score .hd small { color: var(--muted); font-size: 13px; font-family: var(--sans); font-weight: 400 }
-.bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px }
-.bar i { height: 7px; border-radius: 99px; background: var(--line) }
-.score .bar i.on { background: var(--pen) }
-.score.s .bar i.on { background: var(--flow) }
-.score p { font-size: 13.5px }
-
-.marked { font-family: var(--serif); font-size: 17px; line-height: 2; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; background: var(--bg) }
-.marked mark { color: inherit; padding: 1px 0; border-radius: 2px }
-.marked mark.g { background: var(--pen-bg); text-decoration: underline wavy var(--pen); text-underline-offset: 4px }
-.marked mark.s { background: var(--flow-bg); border-bottom: 2px solid var(--flow) }
-.marked sup { font-family: var(--sans); font-size: 10.5px; font-weight: 700; margin-left: 1px }
-.marked mark.g + sup { color: var(--pen) }
-.marked mark.s + sup { color: var(--flow) }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted) }
-.legend i { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: baseline }
-.legend .g { background: var(--pen-bg); border-bottom: 2px solid var(--pen) }
-.legend .s { background: var(--flow-bg); border-bottom: 2px solid var(--flow) }
-
-.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px }
-.cols section { display: flex; flex-direction: column; gap: 10px; min-width: 0 }
-.cols h3 { font-size: 15px; font-weight: 700 }
-.cols h3 small { font-weight: 400; color: var(--muted); font-size: 12.5px; margin-left: 6px }
-.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px }
-.items > li { border-bottom: 1px dotted var(--line); padding-bottom: 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; min-width: 0 }
-.items > li:last-child { border-bottom: 0; padding-bottom: 0 }
-.fix { font-family: var(--serif); font-size: 15.5px; overflow-wrap: anywhere }
-.fix .n { font-family: var(--sans); font-weight: 700; font-size: 12px; color: var(--pen); margin-right: 6px }
-.fix del { color: var(--pen); text-decoration-thickness: 1.5px }
-.fix ins { text-decoration: none; font-weight: 600; color: var(--ok) }
-.kind { font-size: 12px; font-weight: 700; color: var(--pen) }
-.kind small { color: var(--muted); font-weight: 400; margin-left: 6px }
-.crit .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px }
-.crit .hd b { font-size: 14px }
-.pill { font-size: 11.5px; font-weight: 700; border-radius: 99px; padding: 0 8px; border: 1px solid currentColor }
-.pill.good { color: var(--ok) } .pill.ok { color: var(--mid) } .pill.weak { color: var(--pen) }
-.find { border-left: 2px solid var(--flow); padding-left: 10px; display: flex; flex-direction: column; gap: 2px }
-.find .n { font-weight: 700; font-size: 12px; color: var(--flow); margin-right: 6px }
-.find q { font-family: var(--serif); font-size: 14.5px; quotes: none; overflow-wrap: anywhere }
-.find .tip { color: var(--flow); font-weight: 500 }
-.wrapup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; border-top: 1px solid var(--line); padding-top: 16px }
-.wrapup h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px }
-.wrapup ul { margin: 0; padding-left: 18px; font-size: 13.5px }
-.wrapup p { font-size: 13.5px }
-
-details.teacher { font-size: 13.5px; color: var(--muted) }
-details.teacher summary { cursor: pointer; font-weight: 500 }
-details.teacher .box { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start }
-details.teacher textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--paper); color: var(--ink); font-size: 13px }
-
-/* 5. revised */
-#revise-body { display: flex; flex-direction: column; gap: 12px; min-width: 0 }
-.marked.revised { background: var(--paper); border-color: var(--leaf); border-width: 2px }
-.marked.revised ins { text-decoration: none; background: var(--leaf); color: var(--navy); font-weight: 600; border-radius: 4px; padding: 0 3px }
-.legend .r { background: var(--leaf); border-bottom: 2px solid var(--navy) }
-details.orig summary { cursor: pointer; font-size: 13.5px; color: var(--muted); width: fit-content }
-details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
-
-/* daily limit */
-.quota { font-size: 13px; color: var(--navy); background: var(--band); border-radius: 99px; padding: 4px 12px; font-variant-numeric: tabular-nums }
-.quota.out { color: var(--pen) }
-.lockbox { border: 1.5px solid var(--navy); background: var(--sel); border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px }
-.lockbox .lk-t { font-family: var(--soft); font-size: 17px; font-weight: 700; color: var(--navy) }
-.lockbox .lk-d { font-size: 13.5px; line-height: 1.7 }
-.lockbox form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
-.lockbox input { border: 1px solid var(--line); border-radius: 99px; background: var(--paper); padding: 8px 14px; font-size: 14px; flex: 1 1 180px; min-width: 0; color: var(--ink) }
-#write.locked textarea#text { opacity: .55; cursor: not-allowed }
-
-/* topic picker */
-.pick { border-top: 1px dashed var(--line); padding-top: 12px }
-.pick summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--navy); width: fit-content }
-.picks { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px }
-.picks button { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 7px 11px; cursor: pointer; text-align: left; display: flex; flex-direction: column; line-height: 1.35; min-width: 0 }
-.picks button:hover { border-color: var(--blue) }
-.picks button b { font-family: var(--serif); font-weight: 500; font-size: 15px; color: var(--ink) }
-.picks button span { font-size: 12px; color: var(--muted) }
-.picks button[aria-pressed="true"] { background: var(--sel); border-color: var(--navy) }
-.picks button[aria-pressed="true"] b { color: var(--navy) }
-
-/* footer */
-.foot { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; font-size: 13px; color: var(--muted) }
-.foot p { font-family: var(--soft); font-size: 14px; color: var(--ink) }
-.foot a { color: var(--navy); font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 8px 16px; display: inline-flex; gap: 6px; align-items: center }
-.foot a:hover { border-color: var(--blue) }
-
-@media (max-width: 820px) {
-  .work { grid-template-columns: minmax(0, 1fr) }
-  .hints { position: static }
-  .cols, .wrapup { grid-template-columns: minmax(0, 1fr) }
-}
-@media (max-width: 560px) {
-  .levels, .scores { grid-template-columns: minmax(0, 1fr) }
-  .topic .en { font-size: 32px }
-  .top h1 { font-size: 32px }
-}
-</style>
+<link rel="stylesheet" href="/writing.css">
 
 <div class="wrap">
-  <div class="navrow"><nav class="tabs" id="tabs" aria-label="메뉴" hidden><a href="/writing" aria-current="page">글쓰기</a><a href="/stats">통계</a></nav><a class="out" href="/">Reading Clinic 홈 <small>수식어 · 문장성분 찾기</small></a></div>
+  <div class="navrow"><nav class="tabs" id="tabs" aria-label="메뉴"><a href="/writing" aria-current="page">글쓰기</a><a href="/writing/exam">내신 서술형 대비</a><a href="/stats">통계</a></nav><a class="out" href="/">Reading Clinic 홈 <small>수식어 · 문장성분 찾기</small></a></div>
   <div class="top">
     <p class="count" id="count" hidden>지금까지 <b id="count-n">0</b>개의 글이 Writing Clinic을 받았어요</p>
     <h1>Writing Clinic<small>천천히, 한 단락씩 쓰는 영어 글쓰기 연습장</small></h1>
@@ -287,10 +65,10 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
               <option>경험을 전하는 글</option>
             </select></label>
         </div>
-        <textarea id="text" maxlength="3000" spellcheck="false" aria-label="영어 글쓰기" placeholder="Write your paragraph in English."></textarea>
+        <div class="ta-wrap"><textarea id="text" maxlength="3000" spellcheck="false" aria-label="영어 글쓰기" placeholder="Write your paragraph in English."></textarea><div class="bubble" id="bubble" hidden role="dialog" aria-label="표현 추천"></div></div>
         <div class="meter" id="meter"></div>
-        <div class="assist" id="assist" hidden role="status" aria-live="polite"><p id="as-t"></p><div class="as-act" id="as-act"></div></div>
-        <label class="note as-toggle" id="as-wrap" hidden><input type="checkbox" id="as-on" checked> 쓰다가 멈추면 도우미가 말 걸기 <span id="as-n"></span></label>
+        <div class="rt" id="rt" hidden><label class="note as-toggle"><input type="checkbox" id="rt-gram"> 문법 실시간 교정</label><label class="note as-toggle"><input type="checkbox" id="rt-sug"> 멈추면 표현 추천 <span id="rt-n"></span></label></div>
+        <div class="gfix" id="gfix" hidden><p class="gfix-h">문법 교정 제안</p><ol id="gfix-list"></ol></div>
         <div class="actions">
           <button class="btn primary" id="btn-eval" type="button">첨삭 받기</button>
           <button class="btn" id="btn-stop" type="button" hidden>중단</button>
@@ -298,7 +76,7 @@ details.orig .marked { margin-top: 8px; font-size: 15.5px; color: var(--muted) }
           <span class="quota" id="quota" hidden></span>
           <span class="note" id="status" role="status"></span>
         </div>
-        <p class="note privacy" id="privacy" hidden>첨삭을 받으면 쓴 글, 이름 칸에 적은 내용, 레벨·주제와 첨삭 결과가 수업에 활용하기 위해 선생님께 저장돼요.</p>
+        <p class="note privacy" id="privacy" hidden>첨삭을 받으면 쓴 글, 이름 칸에 적은 내용, 레벨·주제와 첨삭 결과가 수업에 활용하기 위해 선생님께 저장돼요. 실시간 도우미(문법 교정·표현 추천)를 켜 두면 쓰는 중인 글이 AI로 보내지지만 저장하지는 않아요.</p>
         <div class="offline" id="offline" hidden>이 기기에서는 AI 첨삭을 받을 수 없습니다. AI 첨삭은 Claude에 로그인한 기기에서만 됩니다. <b>제출용으로 복사</b>를 눌러 글을 선생님께 보내면, 선생님이 같은 기준으로 첨삭해 줍니다.</div>
       </section>
     </div>
@@ -915,84 +693,151 @@ async function apiReady() {
 function saveDraft() { store('text', $('text').value); store('name', $('name').value); }
 
 /* ---------- 실시간 도우미 ----------
-   글을 쓰다 n초 동안 멈추면 말을 건다. n은 레벨마다 다르고(선생님이 시트의 "분석 기준"에서 정함),
-   학생이 "괜찮아요"를 누르거나 무시하면 조금 늘고, 점검을 받으면 조금 줄어든다(이 기기에서만).
-   - 문장을 끝내고 멈춤(마침표 뒤) → "방금 쓴 문장 점검받기": 고친 문장이 아니라 어디를 볼지 힌트 하나
-   - 문장 중간에 멈춤 → 막혔을 때 쓸 수 있는 방법 안내 (AI 호출 없음) */
-const AS = { cfg: null, timer: null, seen: new Set(), stuck: new Set(), events: [], open: null, busy: false };
-function asN() {
-  const lv = state.level, base = AS.cfg.n[lv] || 15, adj = Number(store('as.adj.' + lv) || 0);
-  return Math.min(base * 2, Math.max(Math.round(base / 2), base + adj));
-}
-function asAdj(d) { const lv = state.level, base = AS.cfg.n[lv] || 15, cur = Number(store('as.adj.' + lv) || 0); store('as.adj.' + lv, String(Math.max(-base / 2, Math.min(base, cur + d)))); asLabel(); }
-function asLabel() { if (AS.cfg) $('as-n').textContent = '(지금 ' + asN() + '초)'; }
-function asEvent(kind, act, extra) { AS.events.push(Object.assign({ level: state.level, kind, act, n: asN() }, extra || {})); if (AS.events.length >= 20) asFlush(); }
-function asFlush() {
-  if (!AS.events.length) return;
-  const body = JSON.stringify({ op: 'events', device: deviceId(), list: AS.events.splice(0) });
+   두 가지를 각각 켜고 끌 수 있다.
+   ① 문법 실시간 교정: 문장을 끝낼 때마다(. ! ?) 그 문장을 검사해서, 오류가 있으면 고친 문장과 한국어 설명을 원고지 아래에 보여 준다. [바꾸기]를 누르면 그대로 고쳐 준다.
+   ② 표현 추천: 쓰다가 n초 멈추면 커서 바로 위에 작은 말풍선이 서서히 떠오른다. 글 전체와 지금 문장의 문맥을 보고
+      "이런 표현을 찾으시나요?"(추천 단어) / "이렇게 이어가는 것은 어떠세요?"(문장 마무리·이어 쓸 구)를 한국어 뜻과 함께 보여 주고, 누르면 커서 자리에 들어간다.
+      Basic은 문장 마무리까지, Intermediate는 이어 쓸 구까지, Advanced는 단어만.
+   n은 레벨마다 다르고(선생님이 시트의 "분석 기준"에서 정함), 학생이 닫거나 무시하면 조금 늘고 추천을 고르면 조금 줄어든다(이 기기에서만). */
+const RT = { cfg: null, timer: null, open: false, req: 0, gQueue: [], gSeen: new Set(), gBusy: false, events: [] };
+const rtOn = (k) => store('rt.' + k) !== '0';
+function rtN() { const lv = state.level, base = RT.cfg.n[lv] || 15, adj = Number(store('as.adj.' + lv) || 0); return Math.min(base * 2, Math.max(Math.round(base / 2), base + adj)); }
+function rtAdj(d) { const lv = state.level, base = RT.cfg.n[lv] || 15, cur = Number(store('as.adj.' + lv) || 0); store('as.adj.' + lv, String(Math.max(-base / 2, Math.min(base, cur + d)))); $('rt-n').textContent = '(' + rtN() + '초)'; }
+function rtEvent(kind, act, what) { RT.events.push({ level: state.level, kind, act, n: rtN(), what: what || '' }); if (RT.events.length >= 20) rtFlush(); }
+function rtFlush() {
+  if (!RT.events.length) return;
+  const body = JSON.stringify({ op: 'events', device: deviceId(), list: RT.events.splice(0) });
   try { if (!(navigator.sendBeacon && navigator.sendBeacon('/api/assist', new Blob([body], { type: 'text/plain' })))) fetch('/api/assist', { method: 'POST', body, keepalive: true }); } catch (e) {}
 }
-function asHide(asIgnored) {
-  if (asIgnored && (AS.open === 'check' || AS.open === 'stuck')) { asEvent(AS.open, 'ignore'); asAdj(1); }
-  AS.open = null; $('assist').hidden = true; $('assist').classList.remove('good');
+const escH = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ENDS = /[.!?]["')\]]*\s*$/;
+
+// 커서의 화면 위치: 원고지와 똑같이 꾸민 보이지 않는 복사본에 커서 앞 글자를 넣고 끝 위치를 잰다
+function caretXY(ta, pos) {
+  const cs = getComputedStyle(ta), m = document.createElement('div');
+  ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'tabSize'].forEach((k) => (m.style[k] = cs[k]));
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word', top: '0', left: '-9999px' });
+  m.textContent = ta.value.slice(0, pos);
+  const mark = document.createElement('span'); mark.textContent = '​'; m.appendChild(mark);
+  document.body.appendChild(m);
+  const xy = { x: mark.offsetLeft, y: mark.offsetTop - ta.scrollTop, h: parseFloat(cs.lineHeight) || 24 };
+  m.remove(); return xy;
 }
-function asShow(kind, html, buttons) {
-  AS.open = kind; $('as-t').innerHTML = html; $('as-act').replaceChildren(...buttons); $('assist').hidden = false;
+// ---- ② 표현 추천 말풍선
+function rtClose(why) {
+  if (!RT.open) return;
+  if (why) { rtEvent('suggest', why); rtAdj(why === 'close' ? (RT.cfg.step || 3) : 1); }
+  RT.open = false; const bb = $('bubble'); bb.classList.remove('show'); setTimeout(() => { if (!RT.open) bb.hidden = true; }, 200);
 }
-function btn(text, cls, fn) { const b = h('button', { type: 'button', text }); if (cls) b.className = cls; b.onclick = () => { fn(); if ($('assist').hidden) $('text').focus(); }; return b; }   // 닫으면 바로 이어 쓰도록 원고지로
-function sentencesOf(t) { return (t.match(/[^.!?]+[.!?]+["')\]]*/g) || []).map((x) => x.trim()).filter(Boolean); }
-function asSchedule() {
-  if (!AS.cfg) return;
-  if ((AS.open === 'check' || AS.open === 'stuck') && !AS.busy) asHide(true);   // 답하지 않고 계속 씀 = 무시 (힌트 결과는 고칠 동안 그대로 둠)
-  clearTimeout(AS.timer);
-  if (!$('as-on').checked) return;
-  const done = /[.!?]["')\]]*\s*$/.test($('text').value);
-  AS.timer = setTimeout(asFire, asN() * 1000 * (done ? 1 : 1.5));
+function rtSchedule() {
+  if (!RT.cfg) return;
+  if (RT.open) rtClose('ignore');      // 말풍선이 떠 있는데 계속 씀 = 무시
+  RT.req++; clearTimeout(RT.timer);
+  if (!rtOn('sug')) return;
+  RT.timer = setTimeout(rtSuggest, rtN() * 1000);
 }
-function asFire() {
-  if (!AS.cfg || state.busy || AS.busy || $('write').classList.contains('locked') || !$('as-on').checked || document.activeElement !== $('text')) return;
-  const text = $('text').value, trimmed = text.trimEnd();
-  if (/[.!?]["')\]]*$/.test(trimmed)) {
-    const ss = sentencesOf(trimmed), s = ss[ss.length - 1] || '';
-    if (s.split(/\s+/).length < 4 || AS.seen.has(s)) return;
-    AS.seen.add(s); asEvent('check', 'shown');
-    asShow('check', '방금 쓴 문장, 한번 점검해 볼까요? 고친 문장 대신 어디를 보면 좋을지 힌트를 줄게요.', [
-      btn('괜찮아요', '', () => { asEvent('check', 'decline'); asAdj(AS.cfg.step || 3); asHide(false); }),
-      btn('점검받기', 'go', () => asCheck(s, ss[ss.length - 2] || ''))]);
-  } else {
-    const tail = trimmed.split(/[.!?]["')\]]*\s+/).pop() || '', key = (sentencesOf(trimmed).length) + ':' + tail.split(/\s+/).slice(0, 2).join(' ');
-    if (tail.split(/\s+/).filter(Boolean).length < 2 || AS.stuck.has(key)) return;
-    AS.stuck.add(key); asEvent('stuck', 'shown');
-    asShow('stuck', '막혔나요? 오른쪽 <b>단어 힌트</b>를 눌러 보거나, 하고 싶은 말을 먼저 우리말로 짧게 적어 두고 이어서 써도 좋아요.', [
-      btn('닫기', '', () => { asEvent('stuck', 'decline'); asAdj(1); asHide(false); })]);
-  }
-}
-async function asCheck(sentence, prev) {
-  asEvent('check', 'accept'); asAdj(-1);
-  AS.busy = true; asShow('check', '문장을 읽고 있어요…', []);
+async function rtSuggest() {
+  const ta = $('text');
+  if (!RT.cfg || !rtOn('sug') || state.busy || $('write').classList.contains('locked') || document.activeElement !== ta || ta.selectionStart !== ta.selectionEnd) return;
+  const pos = ta.selectionStart, before = ta.value.slice(0, pos), after = ta.value.slice(pos);
+  if (before.trim().split(/\s+/).length < 2) return;
+  const my = ++RT.req;
   try {
-    const r = await fetch('/api/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'check', level: state.level, sentence, prev, topic: cur().en, device: deviceId() }) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) { asShow('done', d.error === 'daily_limit' ? '오늘 도우미 점검은 여기까지예요. 다 쓰고 나서 첨삭을 받아 보세요.' : '지금은 점검할 수 없어요. 그대로 이어서 써 주세요.', [btn('닫기', '', () => asHide(false))]); return; }
-    asEvent('check', 'result', { ok: d.ok });
-    const fx = d.focus ? ' <q>' + d.focus.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</q>' : '';
-    const hint = String(d.hint || '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-    asShow('done', (d.ok ? '<b>좋아요!</b> ' : '<b>힌트</b>' + fx + ' · ') + hint, [btn('알겠어요', 'go', () => asHide(false))]);
-    $('assist').classList.toggle('good', Boolean(d.ok));
-  } catch (e) { asShow('done', '지금은 점검할 수 없어요. 그대로 이어서 써 주세요.', [btn('닫기', '', () => asHide(false))]); }
-  finally { AS.busy = false; }
+    const r = await fetch('/api/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'suggest', level: state.level, before, after, topic: cur().en, gtype: $('gtype').value, device: deviceId() }) });
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d || my !== RT.req || ta.selectionStart !== pos || document.activeElement !== ta) return;   // 그 사이에 다시 썼으면 버림
+    rtShow(d, pos, ENDS.test(before) || !before.trim());
+  } catch (e) { /* 조용히 넘어감 */ }
 }
+function rtShow(d, pos, atStart) {
+  const bb = $('bubble'), parts = [];
+  if (d.words && d.words.length) parts.push('<p class="bt">' + (atStart ? '이렇게 시작해 보면 어때요?' : '이런 표현을 찾으시나요?') + '</p><div class="bw">' + d.words.map((w, i) => '<button type="button" data-w="' + i + '"><b>' + escH(w.en) + '</b><small>' + escH(w.ko) + '</small></button>').join('') + '</div>');
+  if (d.cont) parts.push('<p class="bt">' + (atStart ? '이렇게 이어가는 것은 어떠세요?' : state.level === 'B' ? '이렇게 마무리해 보는 건 어떠세요?' : '이렇게 이어가는 것은 어떠세요?') + '</p><button type="button" class="bc" data-c="1"><b>' + escH(d.cont.en) + '</b><small>' + escH(d.cont.ko) + '</small></button>');
+  bb.innerHTML = parts.join('') + '<button type="button" class="bx" aria-label="닫기">×</button>';
+  bb.onmousedown = (e) => e.preventDefault();   // 누를 때 원고지 커서를 잃지 않게
+  bb.onclick = (e) => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.classList.contains('bx')) { rtClose('close'); $('text').focus(); return; }
+    const text = t.dataset.c ? d.cont.en : d.words[+t.dataset.w].en;
+    rtInsert(text, pos); rtEvent('suggest', 'pick', t.dataset.c ? 'cont' : 'word'); rtAdj(-1);
+    RT.open = false; bb.classList.remove('show'); bb.hidden = true;
+  };
+  // 커서 바로 위에 띄우고, 위쪽 자리가 모자라면 아래에
+  const ta = $('text'), xy = caretXY(ta, pos);
+  bb.hidden = false; bb.style.left = '0px'; bb.style.top = '0px';
+  const w = bb.offsetWidth, hgt = bb.offsetHeight, W = ta.offsetWidth;
+  let left = Math.max(4, Math.min(xy.x - 24, W - w - 4)), top = ta.offsetTop + xy.y - hgt - 6;
+  if (xy.y < hgt + 6) top = ta.offsetTop + xy.y + xy.h + 4;   // 첫 줄 근처면 위에 자리가 없으니 아래로
+  bb.style.left = left + 'px'; bb.style.top = top + 'px';
+  RT.open = true; rtEvent('suggest', 'shown', atStart ? 'start' : 'mid');
+  requestAnimationFrame(() => bb.classList.add('show'));
+}
+// 커서 자리에 넣기: 앞뒤 띄어쓰기를 맞추고, 넣은 뒤 커서는 넣은 말 끝으로
+function rtInsert(text, pos) {
+  const ta = $('text'), v = ta.value, before = v.slice(0, pos), after = v.slice(pos);
+  let ins = text.trim();
+  // 추천이 이미 쓴 끝 단어로 시작하면 겹치는 부분은 빼고 넣음 (예: "... to" + "to communicate")
+  const tail = before.trim().split(/\s+/).slice(-4).map((w) => w.toLowerCase().replace(/[^a-z']/g, '')), head = ins.split(/\s+/);
+  for (let k = Math.min(4, head.length - 1); k > 0; k--) if (tail.slice(-k).join(' ') === head.slice(0, k).map((w) => w.toLowerCase().replace(/[^a-z']/g, '')).join(' ')) { ins = head.slice(k).join(' '); break; }
+  if (before && !/\s$/.test(before)) ins = ' ' + ins;
+  if (after && !/^[\s.,!?;:]/.test(after)) ins += ' ';
+  ta.value = before + ins + after; const at = pos + ins.length;
+  ta.focus(); ta.setSelectionRange(at, at);
+  updateMeter(); saveDraft();
+}
+// ---- ① 문법 실시간 교정: 방금 끝낸 문장
+function rtSentenceJustEnded() {
+  const ta = $('text'), pos = ta.selectionStart, before = ta.value.slice(0, pos);
+  if (!/[.!?]["')\]]*$/.test(before)) return null;
+  const ss = before.match(/[^.!?]+[.!?]+["')\]]*/g) || [], s = (ss[ss.length - 1] || '').trim(), prev = (ss[ss.length - 2] || '').trim();
+  return s.split(/\s+/).length >= 3 ? { s, prev } : null;
+}
+function rtGrammarInput() {
+  if (!RT.cfg || !rtOn('gram')) return;
+  const x = rtSentenceJustEnded(); if (!x || RT.gSeen.has(x.s)) return;
+  RT.gSeen.add(x.s); RT.gQueue.push(x); rtGrammarNext();
+}
+async function rtGrammarNext() {
+  if (RT.gBusy || !RT.gQueue.length) return;
+  const x = RT.gQueue.shift(); RT.gBusy = true;
+  try {
+    const r = await fetch('/api/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'grammar', level: state.level, sentence: x.s, prev: x.prev, device: deviceId() }) });
+    const d = await r.json().catch(() => null);
+    if (r.ok && d && d.ok === false && $('text').value.includes(x.s)) rtFixShow(x.s, d);
+  } catch (e) {} finally { RT.gBusy = false; rtGrammarNext(); }
+}
+function rtFixShow(orig, d) {
+  const li = h('li', { class: 'gf' });
+  const o = escH(orig), f = d.focus ? escH(d.focus) : '';
+  li.innerHTML = '<p class="gf-o">' + (f && o.includes(f) ? o.replace(f, '<mark>' + f + '</mark>') : o) + '</p><p class="gf-f">→ ' + escH(d.fixed) + '</p>' + (d.ko ? '<p class="gf-k">' + escH(d.ko) + '</p>' : '');
+  const act = h('div', { class: 'gf-a' });
+  const done = (act2) => { rtEvent('grammar', act2); li.remove(); $('gfix').hidden = !$('gfix-list').children.length; $('text').focus(); };
+  act.append(btn('그대로 두기', '', () => done('keep')), btn('바꾸기', 'go', () => {
+    const ta = $('text'), v = ta.value, i = v.lastIndexOf(orig);
+    if (i >= 0) { const caret = ta.selectionStart, nv = v.slice(0, i) + d.fixed + v.slice(i + orig.length); ta.value = nv; const shift = caret > i ? d.fixed.length - orig.length : 0; ta.setSelectionRange(caret + shift, caret + shift); RT.gSeen.add(d.fixed); updateMeter(); saveDraft(); }
+    done('apply');
+  }));
+  li.append(act); $('gfix-list').prepend(li); $('gfix').hidden = false;
+  while ($('gfix-list').children.length > 3) $('gfix-list').lastChild.remove();
+  rtEvent('grammar', 'shown');
+}
+function btn(text, cls, fn) { const b = h('button', { type: 'button', text }); if (cls) b.className = cls; b.onclick = fn; return b; }
 async function assistInit() {
   if (window.claude || (location.protocol !== 'https:' && location.protocol !== 'http:')) return;
   try {
     const r = await fetch('/api/assist', { cache: 'no-store' }); const d = r.ok ? await r.json() : null;
     if (!d || !d.ready) return;
-    AS.cfg = d; $('as-wrap').hidden = false;
-    $('as-on').checked = store('as.off') !== '1'; asLabel();
-    $('as-on').addEventListener('change', () => { store('as.off', $('as-on').checked ? '0' : '1'); if (!$('as-on').checked) { clearTimeout(AS.timer); asHide(false); } });
-    $('text').addEventListener('input', asSchedule);
-    $('text').addEventListener('blur', () => clearTimeout(AS.timer));
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') asFlush(); });
+    RT.cfg = d; $('rt').hidden = false;
+    $('rt-gram').checked = rtOn('gram'); $('rt-sug').checked = rtOn('sug'); $('rt-n').textContent = '(' + rtN() + '초)';
+    $('rt-gram').addEventListener('change', () => { store('rt.gram', $('rt-gram').checked ? '1' : '0'); if (!$('rt-gram').checked) { RT.gQueue = []; } });
+    $('rt-sug').addEventListener('change', () => { store('rt.sug', $('rt-sug').checked ? '1' : '0'); if (!$('rt-sug').checked) { clearTimeout(RT.timer); rtClose(''); } });
+    const ta = $('text');
+    ta.addEventListener('input', () => { rtSchedule(); rtGrammarInput(); });
+    ta.addEventListener('click', () => { if (RT.open) rtClose('ignore'); rtSchedule(); });
+    ta.addEventListener('keydown', (e) => { if (e.key === 'Escape' && RT.open) { rtClose('close'); e.preventDefault(); } });
+    ta.addEventListener('blur', () => { clearTimeout(RT.timer); setTimeout(() => { if (RT.open && document.activeElement !== ta && !$('bubble').contains(document.activeElement)) rtClose('ignore'); }, 150); });
+    ta.addEventListener('scroll', () => rtClose(''));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') rtFlush(); });
   } catch (e) { /* 도우미 없이도 글쓰기는 그대로 */ }
 }
 

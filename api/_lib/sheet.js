@@ -1,7 +1,7 @@
 // 구글 시트(Apps Script 웹 앱)와 주고받기 + "분석 기준" 탭의 설정값
 // 필요한 환경 변수: LOG_URL, LOG_SECRET
 // 학생 화면에 보내도 되는 설정만 PUBLIC에 둡니다.
-const DEFAULTS = { minN: 5, master: 80, recent: 10, assistB: 12, assistI: 18, assistA: 25, assistStep: 3, assistOn: 1 };
+const DEFAULTS = { minN: 5, master: 80, recent: 10, assistB: 12, assistI: 18, assistA: 25, assistStep: 3, assistOn: 1, examMake: 5, examGrade: 20 };
 const PUBLIC = Object.keys(DEFAULTS);
 let info = null, infoAt = 0;
 
@@ -41,4 +41,15 @@ function tooMany(key, max) {
 }
 function body(req) { let b = req.body; if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } } return b || {}; }
 
-module.exports = { askSheet, getInfo, forget, ipOf, kstTime, tooMany, body, DEFAULTS };
+// 첨삭 화면의 "암호 확인"으로 받은 토큰이면 횟수 제한 없음 (evaluate.js와 같은 계산)
+const crypto = require('crypto');
+function unlimited(req) {
+  const pw = (process.env.UNLOCK_PASSWORD || '').trim(); if (!pw) return false;
+  const tok = crypto.createHmac('sha256', pw + '|' + (process.env.LOG_SECRET || '')).update('wc-unlimited-v1').digest('hex').slice(0, 40), got = String(req.headers['x-wc-pass'] || '');
+  return got.length === tok.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(tok));
+}
+// 같은 입력 = 같은 결과: 시트의 "저장된 결과" 탭에 보관
+async function cacheGet(key) { const d = await askSheet({ action: 'get', key }, 6000); try { return d && !d.error && d.result ? JSON.parse(d.result) : null; } catch (e) { return null; } }
+async function cachePut(key, value) { await askSheet({ action: 'cache_put', key, time: kstTime(), value: JSON.stringify(value) }, 8000); }
+
+module.exports = { askSheet, getInfo, forget, ipOf, kstTime, tooMany, body, DEFAULTS, unlimited, cacheGet, cachePut };
