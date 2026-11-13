@@ -76,9 +76,9 @@ async function claude(prompt, maxTokens, ms) {
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
       headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, temperature: 0, messages: [{ role: 'user', content: prompt }] }) });
+      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) });
     const data = await r.json().catch(() => null);
-    if (!r.ok) { console.error('exam error', r.status, data?.error?.type, data?.error?.message); return { error: r.status === 429 || r.status === 529 ? 'busy' : 'upstream' }; }
+    if (!r.ok) { console.error('exam error', r.status, data?.error?.type, data?.error?.message); return { error: r.status === 429 || r.status === 529 ? 'busy' : 'api_' + r.status + (data?.error?.type ? '_' + data.error.type : '') }; }
     const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
     const a = text.indexOf('{'), z = text.lastIndexOf('}');
     try { return JSON.parse(text.slice(a, z + 1)); } catch (e) { console.error('exam bad json', data.stop_reason, text.slice(0, 300)); return { error: data.stop_reason === 'max_tokens' ? 'too_long_output' : 'bad_json' }; }

@@ -60,7 +60,7 @@ async function ask(prompt, maxTokens) {
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
       headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, temperature: 0, messages: [{ role: 'user', content: prompt }] }) });
+      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) });
     const data = await r.json().catch(() => null);
     if (!r.ok) { console.error('assist error', r.status, data?.error?.type, data?.error?.message); return null; }
     const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
