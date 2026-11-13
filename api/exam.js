@@ -71,18 +71,32 @@ For each blank judge two things (do NOT judge the word count or keyword conditio
 
 Answer with JSON only: {"blanks": [{"label": "A", "meaning": "o", "grammar": "o", "ko": "..."}]}`;
 }
+// AI 서버가 잠깐 바쁠 때(500·503·529)는 잠시 쉬었다가 다시 요청 (남은 시간 안에서)
 async function claude(prompt, maxTokens, ms) {
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms || 50000);
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
-      headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) });
-    const data = await r.json().catch(() => null);
-    if (!r.ok) { console.error('exam error', r.status, data?.error?.type, data?.error?.message); return { error: r.status === 429 || r.status === 529 ? 'busy' : 'api_' + r.status + (data?.error?.type ? '_' + data.error.type : '') }; }
-    const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-    const a = text.indexOf('{'), z = text.lastIndexOf('}');
-    try { return JSON.parse(text.slice(a, z + 1)); } catch (e) { console.error('exam bad json', data.stop_reason, text.slice(0, 300)); return { error: data.stop_reason === 'max_tokens' ? 'too_long_output' : 'bad_json' }; }
-  } catch (e) { console.error('exam failure', e && e.name); return { error: e && e.name === 'AbortError' ? 'timeout' : 'upstream' }; } finally { clearTimeout(timer); }
+  const until = Date.now() + (ms || 50000);
+  let last = { error: 'upstream' };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const left = until - Date.now();
+    if (left < 8000) break;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), left);
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
+        headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) });
+      const raw = await r.text(); let data = null; try { data = JSON.parse(raw); } catch (e) {}
+      if (!r.ok) {
+        console.error('exam error', r.status, data?.error?.type, data?.error?.message || raw.slice(0, 200));
+        last = { error: [429, 500, 502, 503, 504, 529].includes(r.status) ? 'busy' : 'api_' + r.status + (data?.error?.type ? '_' + data.error.type : ''), status: r.status };
+        if (last.error === 'busy') { await new Promise((ok) => setTimeout(ok, 1500 + attempt * 1500)); continue; }
+        return last;
+      }
+      const text = ((data && data.content) || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
+      const i = text.indexOf('{'), z = text.lastIndexOf('}');
+      try { return JSON.parse(text.slice(i, z + 1)); } catch (e) { console.error('exam bad json', data && data.stop_reason, text.slice(0, 300)); return { error: data && data.stop_reason === 'max_tokens' ? 'too_long_output' : 'bad_json' }; }
+    } catch (e) { console.error('exam failure', e && e.name, e && e.message); last = { error: e && e.name === 'AbortError' ? 'timeout' : 'network' }; if (last.error === 'timeout') return last; }
+    finally { clearTimeout(timer); }
+  }
+  return last;
 }
 // AI가 만든 문항을 코드로 검증·정리. 사소한 표기 차이는 코드가 바로잡고, 고칠 수 없는 문제만 다시 요청
 const loose = (x) => String(x || '').toLowerCase().replace(/[‘’`´]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/[^a-z0-9]/g, '');
@@ -173,7 +187,7 @@ module.exports = async (req, res) => {
         const left = DEADLINE - (Date.now() - T0);
         if (left < 15000) break;
         const o = await claude(prompt, 1400, left - 4000);
-        if (o && o.error) { last = o.error; if (o.error === 'busy') return res.status(503).json({ error: 'busy' }); continue; }
+        if (o && o.error) { last = o.error + (o.status ? '_' + o.status : ''); if (o.error === 'busy') return res.status(503).json({ error: 'busy', detail: 'api_' + (o.status || '') }); continue; }
         r = checkItem(o, type, passage);
         if (r.item) break;
         last = r.problem; console.error('exam make check failed:', r.problem);
