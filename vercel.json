@@ -4,11 +4,17 @@
     "api/evaluate.js": {
       "maxDuration": 60
     },
+    "api/drill.js": {
+      "maxDuration": 20
+    },
+    "api/assist.js": {
+      "maxDuration": 20
+    },
     "api/stats.js": {
       "maxDuration": 20
     },
-    "api/drill.js": {
-      "maxDuration": 20
+    "api/exam.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -19,6 +25,10 @@
     {
       "source": "/reading/core",
       "destination": "/core"
+    },
+    {
+      "source": "/writing/exam",
+      "destination": "/exam"
     }
   ]
 }
