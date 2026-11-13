@@ -51,7 +51,7 @@ Also give:
 Passage:
 """${passage}"""
 
-Answer with JSON only:
+Keep "why", "ko" and "explain" short. Answer with the JSON object only (no text before or after it):
 {"target": "...", "display": "...", "blanks": [{"label": "A", "answer": "...", "keywords": ["..."], "kwFrom": "original", "maxWords": 5, "accept": ["..."]}], "why": "...", "ko": "...", "explain": "..."}`;
 }
 function gradePrompt(item, passage, answers) {
@@ -186,7 +186,7 @@ module.exports = async (req, res) => {
       for (let tries = 0; tries < 2; tries++) {
         const left = DEADLINE - (Date.now() - T0);
         if (left < 15000) break;
-        const o = await claude(prompt, 1400, left - 4000);
+        const o = await claude(prompt, 4000, left - 4000);
         if (o && o.error) { last = o.error + (o.status ? '_' + o.status : ''); if (o.error === 'busy') return res.status(503).json({ error: 'busy', detail: 'api_' + (o.status || '') }); continue; }
         r = checkItem(o, type, passage);
         if (r.item) break;
@@ -213,7 +213,7 @@ module.exports = async (req, res) => {
     if (!ai) [ai, u] = await Promise.all([cacheGet(key), unl ? Promise.resolve(null) : quota(device)]);
     if (!ai) {
       if (u && u.grade >= LIM.grade) return res.status(429).json({ error: 'daily_limit', used: u, limit: LIM });
-      const o = await claude(gradePrompt(item, passage, answers), 800);
+      const o = await claude(gradePrompt(item, passage, answers), 2500);
       if (!o || o.error || !Array.isArray(o.blanks)) return res.status(o && o.error === 'busy' ? 503 : 502).json({ error: (o && o.error) || 'upstream' });
       ai = item.blanks.map((x) => { const g = o.blanks.find((y) => String(y.label || '') === x.label) || o.blanks[0] || {};
         return { meaning: ['o', 'partial', 'x'].includes(g.meaning) ? g.meaning : 'x', grammar: g.grammar === 'o' ? 'o' : 'x', ko: norm(g.ko).slice(0, 300) }; });
