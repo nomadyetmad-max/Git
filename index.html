@@ -78,6 +78,46 @@
 .next a { text-decoration: none }
 .store ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px }
 #crit-text { font-size: 14px }
+
+/* 1분 진단 팝업 */
+.diag-btn { align-self: flex-start }
+dialog.dg { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .25) }
+dialog.dg::backdrop { background: rgba(18, 32, 31, .45) }
+.dg-in { display: flex; flex-direction: column; gap: 16px; padding: 22px }
+.dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.dg-top .eyebrow { margin: 0 }
+.dg-x { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; padding: 4px 6px }
+.dg-bar { height: 6px; background: var(--band); border-radius: 99px; overflow: hidden }
+.dg-bar i { display: block; height: 100%; width: 0; background: var(--navy); transition: width .25s }
+.dg h2 { font-family: var(--soft); font-size: 22px; color: var(--navy) }
+.dg .lead { color: var(--muted); font-size: 14.5px }
+.checks { display: flex; flex-direction: column; gap: 8px }
+.checks label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-size: 14.5px; line-height: 1.5 }
+.checks label:has(input:checked) { border-color: var(--navy); background: var(--band) }
+.checks input { margin-top: 3px; accent-color: var(--navy); width: 17px; height: 17px; flex: none }
+.qs { font-family: var(--eng); font-size: 18px; line-height: 1.8; background: var(--band); border-radius: 12px; padding: 12px 14px }
+.qs u { text-underline-offset: 4px }
+.cond { font-size: 13.5px; color: var(--muted) }
+.ch { display: flex; flex-direction: column; gap: 8px }
+.ch button { font: inherit; text-align: left; cursor: pointer; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 15px }
+.ch button.en { font-family: var(--eng); font-size: 16.5px }
+.ch button:hover:not(:disabled) { border-color: var(--blue) }
+.ch button:disabled { cursor: default }
+.ch button.ok { border-color: var(--ok); background: var(--tgt-bg); color: var(--tgt); font-weight: 700 }
+.ch button.no { border-color: var(--bad); background: var(--bad-bg); color: var(--bad) }
+.fb { font-size: 14px; border-radius: 12px; padding: 10px 12px; background: var(--band) }
+.dg-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap }
+.dg-nav .btn { min-width: 110px }
+.res { display: flex; flex-direction: column; gap: 10px }
+.res-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; border-bottom: 1px solid var(--rule); padding-bottom: 8px }
+.res-row b { font-size: 15px; color: var(--navy) }
+.res-row small { grid-column: 1 / -1; color: var(--muted); font-size: 13px }
+.lv { font-size: 12.5px; font-weight: 700; border-radius: 99px; padding: 3px 10px; white-space: nowrap }
+.lv.l0 { background: var(--tgt-bg); color: var(--tgt) }
+.lv.l1 { background: var(--mod-bg); color: var(--mod) }
+.lv.l2 { background: var(--bad-bg); color: var(--bad) }
+.mine { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; font-size: 14.5px; background: var(--band); border-radius: 14px; padding: 12px 14px }
+.mine a { color: var(--navy); font-weight: 700 }
 </style>
 </head><body>
 <div class="wrap">
@@ -95,7 +135,9 @@
   <div class="card next" id="next" hidden><p id="next-t"></p><a class="btn small" id="next-a" href="/reading?review=1">복습하기</a></div>
 
   <section class="card finder" aria-labelledby="h-find">
-    <div class="sec-h"><span class="eyebrow">STEP 1 · 진단</span><h2 id="h-find">나에게 맞는 연습 찾기</h2><p>두 가지만 골라 주세요. 고른 내용은 이 기기에만 남아요.</p></div>
+    <div class="sec-h"><span class="eyebrow">STEP 1 · 진단</span><h2 id="h-find">나에게 맞는 연습 찾기</h2><p>체크리스트와 가벼운 문제 5개로 1분 만에 진단받거나, 아래에서 직접 골라도 돼요. 결과는 이 기기에만 남아요.</p></div>
+    <div class="mine" id="mine" hidden></div>
+    <button type="button" class="btn diag-btn" id="diag-open">1분 진단 시작하기</button>
     <div class="q"><span>학년</span>
       <div class="opts" id="grades"><button type="button" data-g="0" aria-pressed="false">예비 고1</button><button type="button" data-g="1" aria-pressed="false">고1</button><button type="button" data-g="2" aria-pressed="false">고2</button><button type="button" data-g="3" aria-pressed="false">고3</button></div>
     </div>
@@ -179,6 +221,14 @@
     </ul>
   </section>
 
+  <dialog class="dg" id="dg" aria-labelledby="dg-h">
+    <div class="dg-in">
+      <div class="dg-top"><span class="eyebrow" id="dg-step">1분 진단</span><button type="button" class="dg-x" id="dg-x">나중에 할게요 ✕</button></div>
+      <div class="dg-bar" aria-hidden="true"><i id="dg-bar"></i></div>
+      <div id="dg-body"></div>
+    </div>
+  </dialog>
+
   <footer class="foot">
     <p>문장 성분을 아는 것은 글을 읽는 첫걸음! 독해가 곧 영어다.</p>
     <a href="https://claude.ai/artifact/HLYjzu6LZcYFyGzJBRijqj" target="_blank" rel="noopener">화전 우등생 학원 <span aria-hidden="true">↗</span></a>
@@ -228,6 +278,134 @@ $('needs').addEventListener('click', (e) => { const b = e.target.closest('button
   if (g !== null && [0, 1, 2, 3].includes(Number(g))) { st.g = Number(g); pick($('grades'), 'g', st.g); }
   if (n && RX[n]) { st.n = n; pick($('needs'), 'n', n); }
   show();
+})();
+
+/* ---------- 1분 진단: 학년 → 체크리스트 → 문제 5개 → 결과와 바로 가기 ---------- */
+const AREA = {
+  core: { name: '문장의 뼈대 (S·V·O·C)', tool: '문장성분 찾기', max: 4 },
+  mod: { name: '꾸미는 말의 범위', tool: '수식어 찾기', max: 4 },
+  exam: { name: '조건에 맞춰 쓰기', tool: '내신 서술형 대비', max: 2 },
+  write: { name: '영어로 글쓰기', tool: '글쓰기 첨삭', max: 1 },
+};
+const CHECKS = [
+  ['core', '긴 문장을 읽다가 앞으로 돌아가서 다시 읽는 일이 많아요.'],
+  ['core', '주어가 어디서 끝나고 동사가 어디인지 헷갈릴 때가 있어요.'],
+  ['mod', 'who·which·-ing·to가 나오면 어디까지 묶어야 할지 모르겠어요.'],
+  ['mod', '단어 뜻은 다 아는데 해석이 어색하게 나와요.'],
+  ['write', '영어로 3문장 이상 쓰는 게 막막해요.'],
+  ['exam', '서술형에서 조건(단어 수·어형)을 놓쳐 감점된 적이 있어요.'],
+];
+const QUIZ = [
+  { a: 'core', ask: '이 문장의 동사(V)는 무엇일까요?', s: 'The books on the top shelf near the window belong to my sister.',
+    o: ['shelf', 'near', 'belong', 'sister'], k: 2,
+    why: 'on the top shelf near the window는 The books를 꾸미는 말이에요. 꾸미는 말을 걷어 내면 The books belong to my sister.가 남아요.' },
+  { a: 'core', ask: '이 문장의 주어(S)는 어디까지일까요?', s: 'Learning a new language in a short time requires patience.',
+    o: ['Learning', 'Learning a new language', 'Learning a new language in a short time', 'patience'], k: 2,
+    why: '동사 requires 앞이 모두 주어예요. 동명사구 Learning a new language in a short time이 통째로 주어예요.' },
+  { a: 'mod', ask: '밑줄 친 부분이 꾸며 주는 말은 무엇일까요?', s: 'I bought a bag for my mother <u>made of soft leather</u>.',
+    o: ['I', 'a bag', 'my mother', 'soft leather'], k: 1,
+    why: "'부드러운 가죽으로 만들어진' 것은 엄마가 아니라 가방이에요. 수식어가 꾸미는 말과 떨어져 있을 때도 뜻으로 확인해요." },
+  { a: 'mod', ask: '수식어(관계사절)의 범위를 바르게 묶은 것은?', s: 'The girl who I met at the library yesterday was reading a book.',
+    o: ['(who I met)', '(who I met at the library)', '(who I met at the library yesterday)', '(who I met at the library yesterday was reading)'], k: 2, en: true,
+    why: '관계사절은 문장의 진짜 동사 was reading 바로 앞에서 끝나요. at the library yesterday까지 관계사절 안의 말이에요.' },
+  { a: 'exam', ask: '<조건>에 맞게 쓴 문장은?', s: '그는 그 상자를 들 수 있을 만큼 충분히 강하다.', cond: '<조건> enough를 사용할 것, 8단어로 쓸 것', ko: true,
+    o: ['He is enough strong to lift the box.', 'He is strong enough to lift the box.', 'He is strong enough to lift box.', 'He is so strong that he can lift the box.'], k: 1, en: true,
+    why: 'enough는 형용사 뒤에 와요(strong enough). 관사 the를 빠뜨리면 7단어가 되고, so ~ that은 enough 조건을 어겨요.' },
+];
+const D = { step: 0, g: null, chk: new Set(), ans: [] };
+const dg = $('dg');
+function dgSet(label, frac, html) { $('dg-step').textContent = label; $('dg-bar').style.width = Math.round(frac * 100) + '%'; $('dg-body').innerHTML = html; }
+function dgOpen() { D.step = 0; D.chk = new Set(); D.ans = []; if (D.g === null && st.g !== null) D.g = st.g; dgRender(); if (dg.showModal) dg.showModal(); else dg.setAttribute('open', ''); }
+function dgClose() { L.store('hub.diag.seen', '1'); if (dg.open) dg.close(); }
+$('dg-x').onclick = dgClose;
+dg.addEventListener('cancel', () => L.store('hub.diag.seen', '1'));
+$('diag-open').onclick = dgOpen;
+
+function dgRender() {
+  const total = 2 + QUIZ.length;
+  if (D.step === 0) {
+    dgSet('1분 진단 · 1/' + total, 0.05, `<div class="res"><h2 id="dg-h">지금 내 영어, 어디가 막혀 있을까요?</h2><p class="lead">체크리스트와 가벼운 문제 5개로 지금 상태를 확인하고, 도움이 될 연습으로 바로 안내해 줄게요. 점수는 저장하지 않고 이 기기에만 결과가 남아요.</p>
+      <div class="q"><span>학년을 골라 주세요</span><div class="opts" id="dg-g">${GN.map((n, i) => `<button type="button" data-g="${i}" aria-pressed="${D.g === i}">${n}</button>`).join('')}</div></div>
+      <div class="dg-nav"><span></span><button type="button" class="btn" id="dg-next" ${D.g === null ? 'disabled' : ''}>시작하기</button></div></div>`);
+    $('dg-g').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; D.g = Number(b.dataset.g); pick($('dg-g'), 'g', D.g); $('dg-next').disabled = false; };
+    $('dg-next').onclick = () => { D.step = 1; dgRender(); };
+    return;
+  }
+  if (D.step === 1) {
+    dgSet('1분 진단 · 2/' + total + ' · 체크리스트', 0.2, `<div class="res"><h2 id="dg-h">나에게 해당하는 것을 모두 골라요</h2><p class="lead">하나도 없으면 고르지 않고 넘어가도 돼요.</p>
+      <div class="checks">${CHECKS.map((c, i) => `<label><input type="checkbox" data-i="${i}" ${D.chk.has(i) ? 'checked' : ''}><span>${c[1]}</span></label>`).join('')}</div>
+      <div class="dg-nav"><button type="button" class="btn ghost" id="dg-prev">이전</button><button type="button" class="btn" id="dg-next">문제 풀기</button></div></div>`);
+    $('dg-body').querySelectorAll('input').forEach((x) => (x.onchange = () => (x.checked ? D.chk.add(+x.dataset.i) : D.chk.delete(+x.dataset.i))));
+    $('dg-prev').onclick = () => { D.step = 0; dgRender(); };
+    $('dg-next').onclick = () => { D.step = 2; dgRender(); };
+    return;
+  }
+  const qi = D.step - 2;
+  if (qi < QUIZ.length) {
+    const q = QUIZ[qi];
+    dgSet(`1분 진단 · ${D.step + 1}/${total} · 문제 ${qi + 1}`, 0.2 + 0.75 * (qi / QUIZ.length), `<div class="res"><h2 id="dg-h">${q.ask}</h2>
+      <p class="qs" ${q.ko ? 'style="font-family:var(--soft)"' : ''}>${q.s}</p>${q.cond ? `<p class="cond">${L.esc(q.cond)}</p>` : ''}
+      <div class="ch" id="dg-ch">${q.o.map((o, i) => `<button type="button" data-i="${i}" class="${q.en || !q.ko ? 'en' : ''}">${L.esc(o)}</button>`).join('')}</div>
+      <p class="fb" id="dg-fb" hidden></p>
+      <div class="dg-nav"><button type="button" class="btn ghost" id="dg-skip">잘 모르겠어요</button><button type="button" class="btn" id="dg-next" hidden>${qi === QUIZ.length - 1 ? '결과 보기' : '다음 문제'}</button></div></div>`);
+    const answer = (i) => {
+      D.ans[qi] = i === q.k;
+      $('dg-ch').querySelectorAll('button').forEach((b, j) => { b.disabled = true; if (j === q.k) b.classList.add('ok'); else if (j === i) b.classList.add('no'); });
+      $('dg-fb').hidden = false; $('dg-fb').textContent = (i === q.k ? '맞았어요! ' : i === -1 ? '정답을 확인해 봐요. ' : '아쉬워요. ') + q.why;
+      $('dg-skip').hidden = true; $('dg-next').hidden = false; $('dg-next').focus();
+    };
+    $('dg-ch').onclick = (e) => { const b = e.target.closest('button'); if (b && !b.disabled) answer(+b.dataset.i); };
+    $('dg-skip').onclick = () => answer(-1);
+    $('dg-next').onclick = () => { D.step++; dgRender(); };
+    return;
+  }
+  dgResult();
+}
+
+function diagnose() {
+  const sc = { core: 0, mod: 0, exam: 0, write: 0 };
+  D.chk.forEach((i) => sc[CHECKS[i][0]]++);
+  QUIZ.forEach((q, i) => { if (!D.ans[i]) sc[q.a]++; });
+  const ratio = (k) => sc[k] / AREA[k].max;
+  const order = ['core', 'mod', 'exam', 'write'].filter((k) => sc[k] > 0).sort((a, b) => ratio(b) - ratio(a));
+  return { g: D.g, sc, order, right: D.ans.filter(Boolean).length, at: Date.now() };
+}
+function lvOf(k, sc) { const r = sc[k] / AREA[k].max; return r === 0 ? 0 : r <= 0.5 ? 1 : 2; }
+const LV = ['괜찮아요', '연습하면 좋아요', '먼저 연습해요'];
+function dgResult() {
+  const R = diagnose(); L.store('hub.diag', JSON.stringify(R)); L.store('hub.diag.seen', '1');
+  const first = R.order[0], second = R.order[1];
+  const up = Math.min(3, R.g + 1);
+  const main = first ? RX[first] : { name: '문장성분 찾기', href: '/reading/core', w: false };
+  const msg = first ? `가장 먼저 <b>${AREA[first].tool}</b>를 추천해요. ${RX[first].why}`
+    : `5문제를 모두 맞혔고 체크한 고민도 없어요. 기초가 탄탄해요! 한 단계 높은 <b>${GN[up]}</b> 난이도로 문장성분 찾기에 도전해 보세요.`;
+  const note = first && first !== 'core' && lvOf('core', R.sc) >= 1 ? '<p class="cond">문장의 뼈대도 아직 흔들려요. 문장성분 찾기를 함께 하면 다른 연습도 훨씬 쉬워져요.</p>' : '';
+  dgSet('1분 진단 · 결과', 1, `<div class="res"><h2 id="dg-h">진단 결과 · 문제 ${R.right}/${QUIZ.length}</h2>
+    ${Object.keys(AREA).map((k) => { const l = lvOf(k, R.sc); return `<div class="res-row"><b>${AREA[k].name}</b><span class="lv l${l}">${LV[l]}</span><small>도움이 되는 연습: ${AREA[k].tool}</small></div>`; }).join('')}
+    <div class="rx${main.w ? ' w' : ''}"><span class="tag">${GN[R.g]} · 나에게 맞는 처방</span><h3>${first ? AREA[first].tool : '문장성분 찾기 · ' + GN[up]}</h3><p class="why">${msg}</p>${note}
+      <div class="actions"><a class="btn" id="dg-go" href="${main.href}">바로 가기</a>${second ? `<a class="btn ghost" id="dg-go2" href="${RX[second].href}">다음: ${AREA[second].tool}</a>` : ''}</div></div>
+    <div class="dg-nav"><button type="button" class="btn ghost" id="dg-again">다시 진단</button><button type="button" class="btn ghost" id="dg-home">홈 둘러보기</button></div></div>`);
+  const prep = (k) => () => { const g = first ? R.g : up; L.store('grade', String(g)); if (k && RX[k].w) L.store('level', WL[R.g]); };
+  $('dg-go').addEventListener('click', prep(first));
+  if (second) $('dg-go2').addEventListener('click', prep(second));
+  $('dg-again').onclick = () => { D.step = 0; D.chk = new Set(); D.ans = []; dgRender(); };
+  $('dg-home').onclick = () => { if (dg.open) dg.close(); };
+  applyDiag(R);
+}
+function applyDiag(R) {
+  if (!R) return;
+  st.g = R.g; pick($('grades'), 'g', st.g);
+  if (R.order[0]) { st.n = R.order[0]; pick($('needs'), 'n', st.n); }
+  show();
+  const first = R.order[0], d = new Date(R.at);
+  $('mine').hidden = false;
+  $('mine').innerHTML = `<span>지난 진단(${d.getMonth() + 1}/${d.getDate()}, ${GN[R.g]}): ${first ? `<b>${AREA[first].tool}</b>부터 추천` : '기초가 탄탄해요, 한 단계 높여 도전'}</span><a href="${first ? RX[first].href : '/reading/core'}">바로 가기 →</a>`;
+  $('diag-open').textContent = '진단 다시 하기'; $('diag-open').className = 'btn ghost small diag-btn';
+}
+(function initDiag() {
+  let R = null; try { R = JSON.parse(L.store('hub.diag') || 'null'); } catch (e) {}
+  if (R && typeof R.g === 'number' && Array.isArray(R.order)) applyDiag(R);
+  else if (!L.store('hub.diag.seen')) setTimeout(dgOpen, 400);  // 처음 온 사용자에게만 자동으로
 })();
 
 function render(cfg, plays) {
