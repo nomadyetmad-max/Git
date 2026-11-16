@@ -115,6 +115,9 @@ textarea#text { width: 100%; min-height: 264px; resize: vertical; border: 1px so
 .bubble b { font-family: var(--serif); font-weight: 600; font-size: 15px; color: var(--ink) }
 .bubble small { font-size: 12px; color: var(--muted) }
 .bubble button:hover, .bubble button:focus-visible { border-color: var(--blue); background: var(--sel) }
+.bubble .bs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line) }
+.bubble .bs span { font-size: 12px; color: var(--muted) }
+.bubble .bs .bself { border: 1px solid var(--line); background: transparent; border-radius: 99px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: var(--navy); cursor: pointer }
 .bubble .bx { position: absolute; top: 4px; right: 6px; border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 2px 6px }
 @media (prefers-reduced-motion: reduce) { .bubble { transition: none } }
 .rt { display: flex; flex-wrap: wrap; gap: 6px 18px }

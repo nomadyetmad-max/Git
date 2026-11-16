@@ -66,7 +66,7 @@ function pickJSON(text) {
   try { return JSON.parse(t); } catch (e) { return null; }
 }
 async function askOnce(prompt, maxTokens) {
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 25000);
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
       headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
   if (b.op === 'events') {
     if (tooMany('ev:' + ip, 200) || !Array.isArray(b.list)) return res.status(204).end();
     const list = b.list.slice(0, 50).map((e) => ({ time: kstTime(), level: ['B', 'I', 'A'].includes(e.level) ? e.level : '', kind: e.kind === 'grammar' ? 'grammar' : 'suggest',
-      act: ['shown', 'pick', 'close', 'ignore', 'apply', 'keep'].includes(e.act) ? e.act : '', n: Number.isFinite(e.n) ? Math.round(e.n) : '', ok: typeof e.what === 'string' ? e.what.slice(0, 10) : '', device })).filter((e) => e.act);
+      act: ['shown', 'pick', 'close', 'ignore', 'apply', 'keep', 'self'].includes(e.act) ? e.act : '', n: Number.isFinite(e.n) ? Math.round(e.n) : '', ok: typeof e.what === 'string' ? e.what.slice(0, 10) : '', device })).filter((e) => e.act);
     if (list.length) await askSheet({ action: 'assist_log', list }, 8000);
     return res.status(204).end();
   }
@@ -113,12 +113,12 @@ module.exports = async (req, res) => {
   if (b.op === 'suggest') {
     const before = String(b.before || '').slice(-2500), after = String(b.after || '').slice(0, 500);
     if (before.trim().split(/\s+/).length < 2) return res.status(400).json({ error: 'bad_request' });
-    prompt = suggestPrompt(level, before, after, clip(b.topic, 80), clip(b.gtype, 30)); max = 800;
+    prompt = suggestPrompt(level, before, after, clip(b.topic, 80), clip(b.gtype, 30)); max = 3000;
     key = ['s', MODEL, level, before, after, clip(b.topic, 80), clip(b.gtype, 30)].join('\u0001');
   } else {
     const sentence = clip(b.sentence, 400), prev = clip(b.prev, 400);
     if (sentence.split(' ').length < 3) return res.status(400).json({ error: 'bad_request' });
-    prompt = grammarPrompt(level, sentence, prev); max = 500;
+    prompt = grammarPrompt(level, sentence, prev); max = 2000;
     key = ['g', MODEL, level, prev, sentence].join('\u0001');
   }
   key = crypto.createHash('sha256').update(key).digest('hex').slice(0, 32);

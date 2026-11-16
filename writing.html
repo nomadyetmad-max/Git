@@ -67,7 +67,7 @@
         </div>
         <div class="ta-wrap"><textarea id="text" maxlength="3000" spellcheck="false" aria-label="영어 글쓰기" placeholder="Write your paragraph in English."></textarea><div class="bubble" id="bubble" hidden role="dialog" aria-label="표현 추천"></div></div>
         <div class="meter" id="meter"></div>
-        <div class="rt" id="rt" hidden><label class="note as-toggle"><input type="checkbox" id="rt-gram"> 문법 실시간 교정</label><label class="note as-toggle"><input type="checkbox" id="rt-sug"> 멈추면 표현 추천 <span id="rt-n"></span></label><span class="note rt-st" id="rt-st" role="status"></span></div>
+        <div class="rt" id="rt" hidden><span class="note rt-st" id="rt-st" role="status"></span></div>
         <div class="gfix" id="gfix" hidden><p class="gfix-h">문법 교정 제안</p><ol id="gfix-list"></ol></div>
         <div class="actions">
           <button class="btn primary" id="btn-eval" type="button">첨삭 받기</button>
@@ -700,9 +700,10 @@ function saveDraft() { store('text', $('text').value); store('name', $('name').v
       Basic은 문장 마무리까지, Intermediate는 이어 쓸 구까지, Advanced는 단어만.
    n은 레벨마다 다르고(선생님이 시트의 "분석 기준"에서 정함), 학생이 닫거나 무시하면 조금 늘고 추천을 고르면 조금 줄어든다(이 기기에서만). */
 const RT = { cfg: null, timer: null, open: false, req: 0, gQueue: [], gSeen: new Set(), gBusy: false, events: [] };
-const rtOn = (k) => store('rt.' + k) !== '0';
+// 실시간 도우미는 항상 켜짐(토글 없음). 표현 추천 말풍선의 [스스로 써보기]를 누르면 지금 쓰는 문장을 끝낼 때까지만 쉰다.
+const rtOn = (k) => k !== 'sug' || !RT.self;
 function rtN() { const lv = state.level, base = RT.cfg.n[lv] || 15, adj = Number(store('as.adj.' + lv) || 0); return Math.min(base * 2, Math.max(Math.round(base / 2), base + adj)); }
-function rtAdj(d) { const lv = state.level, base = RT.cfg.n[lv] || 15, cur = Number(store('as.adj.' + lv) || 0); store('as.adj.' + lv, String(Math.max(-base / 2, Math.min(base, cur + d)))); $('rt-n').textContent = '(' + rtN() + '초)'; }
+function rtAdj(d) { const lv = state.level, base = RT.cfg.n[lv] || 15, cur = Number(store('as.adj.' + lv) || 0); store('as.adj.' + lv, String(Math.max(-base / 2, Math.min(base, cur + d)))); }
 function rtEvent(kind, act, what) { RT.events.push({ level: state.level, kind, act, n: rtN(), what: what || '' }); if (RT.events.length >= 20) rtFlush(); }
 function rtFlush() {
   if (!RT.events.length) return;
@@ -766,11 +767,12 @@ function rtShow(d, pos, atStart) {
   const bb = $('bubble'), parts = [];
   if (d.words && d.words.length) parts.push('<p class="bt">' + (atStart ? '이렇게 시작해 보면 어때요?' : '이런 표현을 찾으시나요?') + '</p><div class="bw">' + d.words.map((w, i) => '<button type="button" data-w="' + i + '"><b>' + escH(w.en) + '</b><small>' + escH(w.ko) + '</small></button>').join('') + '</div>');
   if (d.cont) parts.push('<p class="bt">' + (atStart ? '이렇게 이어가는 것은 어떠세요?' : state.level === 'B' ? '이렇게 마무리해 보는 건 어떠세요?' : '이렇게 이어가는 것은 어떠세요?') + '</p><button type="button" class="bc" data-c="1"><b>' + escH(d.cont.en) + '</b><small>' + escH(d.cont.ko) + '</small></button>');
-  bb.innerHTML = parts.join('') + '<button type="button" class="bx" aria-label="닫기">×</button>';
+  bb.innerHTML = parts.join('') + '<div class="bs"><button type="button" class="bself">스스로 써보기</button><span>도움을 받지 않고 스스로 해볼 수도 있어요.</span></div><button type="button" class="bx" aria-label="닫기">×</button>';
   bb.onmousedown = (e) => e.preventDefault();   // 누를 때 원고지 커서를 잃지 않게
   bb.onclick = (e) => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.classList.contains('bx')) { rtClose('close'); $('text').focus(); return; }
+    if (t.classList.contains('bself')) { RT.self = true; rtEvent('suggest', 'self'); RT.open = false; bb.classList.remove('show'); setTimeout(() => (bb.hidden = true), 200); clearTimeout(RT.timer); $('text').focus(); return; }
     const text = t.dataset.c ? d.cont.en : d.words[+t.dataset.w].en;
     rtInsert(text, pos); rtEvent('suggest', 'pick', t.dataset.c ? 'cont' : 'word'); rtAdj(-1);
     RT.open = false; bb.classList.remove('show'); bb.hidden = true;
@@ -841,11 +843,8 @@ async function assistInit() {
     const r = await fetch('/api/assist', { cache: 'no-store' }); const d = r.ok ? await r.json() : null;
     if (!d || !d.ready) { $('rt').hidden = false; $('rt').querySelectorAll('label').forEach((l) => (l.hidden = true)); rtStatus(!d ? '실시간 도우미 서버에 연결하지 못했어요.' + (r.status ? ' (오류 ' + r.status + ')' : '') : d.why === 'off' ? '실시간 도우미가 꺼져 있어요. (선생님: 시트 "분석 기준"의 도우미 켜기 값 확인)' : '실시간 도우미가 아직 준비되지 않았어요. (선생님: AI 키 설정 확인)', true); return; }
     RT.cfg = d; $('rt').hidden = false;
-    $('rt-gram').checked = rtOn('gram'); $('rt-sug').checked = rtOn('sug'); $('rt-n').textContent = '(' + rtN() + '초)';
-    $('rt-gram').addEventListener('change', () => { store('rt.gram', $('rt-gram').checked ? '1' : '0'); if (!$('rt-gram').checked) { RT.gQueue = []; } });
-    $('rt-sug').addEventListener('change', () => { store('rt.sug', $('rt-sug').checked ? '1' : '0'); if (!$('rt-sug').checked) { clearTimeout(RT.timer); rtClose(''); } });
     const ta = $('text');
-    ta.addEventListener('input', () => { rtSchedule(); rtGrammarInput(); });
+    ta.addEventListener('input', () => { if (RT.self && /[.!?]["')\]]*$/.test(ta.value.slice(0, ta.selectionStart))) RT.self = false; rtSchedule(); rtGrammarInput(); });
     ta.addEventListener('click', () => { if (RT.open) rtClose('ignore'); rtSchedule(); });
     ta.addEventListener('keydown', (e) => { if (e.key === 'Escape' && RT.open) { rtClose('close'); e.preventDefault(); } });
     ta.addEventListener('blur', () => { clearTimeout(RT.timer); setTimeout(() => { if (RT.open && document.activeElement !== ta && !$('bubble').contains(document.activeElement)) rtClose('ignore'); }, 150); });
