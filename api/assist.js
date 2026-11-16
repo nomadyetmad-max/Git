@@ -55,7 +55,17 @@ Sentence to check: ${q(sentence)}
 
 Answer with JSON only: {"ok": true or false, "fixed": "...", "focus": "...", "ko": "..."}`;
 }
-async function ask(prompt, maxTokens) {
+// 모델 답에서 JSON만 꺼내기: 코드 블록·앞뒤 설명·"... or null"·끝 쉼표 같은 흔한 흐트러짐을 정리
+function pickJSON(text) {
+  let t = String(text || '').replace(/```(?:json)?/gi, '');
+  const a = t.indexOf('{'), z = t.lastIndexOf('}');
+  if (a < 0 || z < a) return null;
+  t = t.slice(a, z + 1);
+  try { return JSON.parse(t); } catch (e) {}
+  t = t.replace(/\}\s*or\s+null/gi, '}').replace(/null\s*or\s*\{/gi, '{').replace(/,\s*([}\]])/g, '$1').replace(/[\u201c\u201d]/g, '"');
+  try { return JSON.parse(t); } catch (e) { return null; }
+}
+async function askOnce(prompt, maxTokens) {
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal,
@@ -64,9 +74,15 @@ async function ask(prompt, maxTokens) {
     const data = await r.json().catch(() => null);
     if (!r.ok) { console.error('assist error', r.status, data?.error?.type, data?.error?.message); return { __err: r.status + (data?.error?.type ? ' ' + data.error.type : '') }; }
     const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-    const a = text.indexOf('{'), z = text.lastIndexOf('}');
-    return JSON.parse(text.slice(a, z + 1));
-  } catch (e) { console.error('assist failure', e && e.name); return { __err: e && e.name === 'AbortError' ? 'timeout' : 'parse' }; } finally { clearTimeout(timer); }
+    const out = pickJSON(text);
+    if (!out) { console.error('assist parse', data.stop_reason, text.slice(0, 300)); return { __err: 'parse-' + (data.stop_reason || 'x'), __retry: true }; }
+    return out;
+  } catch (e) { console.error('assist failure', e && e.name, e && e.message); return { __err: e && e.name === 'AbortError' ? 'timeout' : 'net', __retry: true }; } finally { clearTimeout(timer); }
+}
+// JSON이 깨졌거나 연결이 끊기면 한 번만 다시 묻기
+async function ask(prompt, maxTokens) {
+  const out = await askOnce(prompt, maxTokens);
+  return out && out.__retry ? askOnce(prompt, maxTokens) : out;
 }
 const clip = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n);
 
@@ -97,12 +113,12 @@ module.exports = async (req, res) => {
   if (b.op === 'suggest') {
     const before = String(b.before || '').slice(-2500), after = String(b.after || '').slice(0, 500);
     if (before.trim().split(/\s+/).length < 2) return res.status(400).json({ error: 'bad_request' });
-    prompt = suggestPrompt(level, before, after, clip(b.topic, 80), clip(b.gtype, 30)); max = 400;
+    prompt = suggestPrompt(level, before, after, clip(b.topic, 80), clip(b.gtype, 30)); max = 800;
     key = ['s', MODEL, level, before, after, clip(b.topic, 80), clip(b.gtype, 30)].join('\u0001');
   } else {
     const sentence = clip(b.sentence, 400), prev = clip(b.prev, 400);
     if (sentence.split(' ').length < 3) return res.status(400).json({ error: 'bad_request' });
-    prompt = grammarPrompt(level, sentence, prev); max = 300;
+    prompt = grammarPrompt(level, sentence, prev); max = 500;
     key = ['g', MODEL, level, prev, sentence].join('\u0001');
   }
   key = crypto.createHash('sha256').update(key).digest('hex').slice(0, 32);
