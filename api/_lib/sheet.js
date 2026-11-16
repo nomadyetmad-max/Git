@@ -1,7 +1,7 @@
 // 구글 시트(Apps Script 웹 앱)와 주고받기 + "분석 기준" 탭의 설정값
 // 필요한 환경 변수: LOG_URL, LOG_SECRET
 // 학생 화면에 보내도 되는 설정만 PUBLIC에 둡니다.
-const DEFAULTS = { minN: 5, master: 80, recent: 10, assistB: 12, assistI: 18, assistA: 25, assistStep: 3, assistOn: 1, examMake: 5, examGrade: 20 };
+const DEFAULTS = { minN: 5, master: 80, recent: 10, assistB: 4, assistI: 5, assistA: 6, assistStep: 3, assistOn: 1, examMake: 5, examGrade: 20 };
 const PUBLIC = Object.keys(DEFAULTS);
 let info = null, infoAt = 0;
 

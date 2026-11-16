@@ -67,7 +67,7 @@
         </div>
         <div class="ta-wrap"><textarea id="text" maxlength="3000" spellcheck="false" aria-label="영어 글쓰기" placeholder="Write your paragraph in English."></textarea><div class="bubble" id="bubble" hidden role="dialog" aria-label="표현 추천"></div></div>
         <div class="meter" id="meter"></div>
-        <div class="rt" id="rt" hidden><label class="note as-toggle"><input type="checkbox" id="rt-gram"> 문법 실시간 교정</label><label class="note as-toggle"><input type="checkbox" id="rt-sug"> 멈추면 표현 추천 <span id="rt-n"></span></label></div>
+        <div class="rt" id="rt" hidden><label class="note as-toggle"><input type="checkbox" id="rt-gram"> 문법 실시간 교정</label><label class="note as-toggle"><input type="checkbox" id="rt-sug"> 멈추면 표현 추천 <span id="rt-n"></span></label><span class="note rt-st" id="rt-st" role="status"></span></div>
         <div class="gfix" id="gfix" hidden><p class="gfix-h">문법 교정 제안</p><ol id="gfix-list"></ol></div>
         <div class="actions">
           <button class="btn primary" id="btn-eval" type="button">첨삭 받기</button>
@@ -732,7 +732,7 @@ function rtClose(why) {
 function rtSchedule() {
   if (!RT.cfg) return;
   if (RT.open) rtClose('ignore');      // 말풍선이 떠 있는데 계속 씀 = 무시
-  RT.req++; clearTimeout(RT.timer);
+  RT.req++; clearTimeout(RT.timer); if ($('rt-st') && !$('rt-st').classList.contains('warn')) rtStatus('');
   if (!rtOn('sug')) return;
   RT.timer = setTimeout(rtSuggest, rtN() * 1000);
 }
@@ -742,12 +742,25 @@ async function rtSuggest() {
   const pos = ta.selectionStart, before = ta.value.slice(0, pos), after = ta.value.slice(pos);
   if (before.trim().split(/\s+/).length < 2) return;
   const my = ++RT.req;
+  rtStatus('표현을 찾고 있어요…');
   try {
     const r = await fetch('/api/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'suggest', level: state.level, before, after, topic: cur().en, gtype: $('gtype').value, device: deviceId() }) });
     const d = await r.json().catch(() => null);
-    if (!r.ok || !d || my !== RT.req || ta.selectionStart !== pos || document.activeElement !== ta) return;   // 그 사이에 다시 썼으면 버림
+    if (my !== RT.req) return;   // 그 사이에 다시 썼으면 버림
+    if (!r.ok || !d) { rtStatus(rtWhy(r.status, d), true); return; }
+    rtStatus('');
+    if (ta.selectionStart !== pos || document.activeElement !== ta) return;
     rtShow(d, pos, ENDS.test(before) || !before.trim());
-  } catch (e) { /* 조용히 넘어감 */ }
+  } catch (e) { if (my === RT.req) rtStatus('인터넷 연결을 확인해 주세요. 표현 추천을 불러오지 못했어요.', true); }
+}
+// 도우미 상태 한 줄: 찾는 중 / 안 되는 이유 (학생도 선생님도 원인을 볼 수 있게)
+function rtStatus(t, bad) { const el = $('rt-st'); if (!el) return; el.textContent = t; el.classList.toggle('warn', Boolean(bad)); }
+function rtWhy(code, d) {
+  const e = d && d.error;
+  if (e === 'daily_limit') return '오늘 실시간 도우미 사용 횟수를 다 썼어요. 내일 다시 켜져요.';
+  if (e === 'too_many') return '요청이 많아 잠시 쉬어요. 조금 뒤에 다시 추천해 줄게요.';
+  if (e === 'not_ready') return '실시간 도우미가 아직 준비되지 않았어요. (선생님: AI 키 설정 확인)';
+  return '표현 추천을 불러오지 못했어요.' + (d && d.code ? ' (오류 ' + d.code + ')' : code ? ' (오류 ' + code + ')' : '');
 }
 function rtShow(d, pos, atStart) {
   const bb = $('bubble'), parts = [];
@@ -826,7 +839,7 @@ async function assistInit() {
   if (window.claude || (location.protocol !== 'https:' && location.protocol !== 'http:')) return;
   try {
     const r = await fetch('/api/assist', { cache: 'no-store' }); const d = r.ok ? await r.json() : null;
-    if (!d || !d.ready) return;
+    if (!d || !d.ready) { $('rt').hidden = false; $('rt').querySelectorAll('label').forEach((l) => (l.hidden = true)); rtStatus(!d ? '실시간 도우미 서버에 연결하지 못했어요.' + (r.status ? ' (오류 ' + r.status + ')' : '') : d.why === 'off' ? '실시간 도우미가 꺼져 있어요. (선생님: 시트 "분석 기준"의 도우미 켜기 값 확인)' : '실시간 도우미가 아직 준비되지 않았어요. (선생님: AI 키 설정 확인)', true); return; }
     RT.cfg = d; $('rt').hidden = false;
     $('rt-gram').checked = rtOn('gram'); $('rt-sug').checked = rtOn('sug'); $('rt-n').textContent = '(' + rtN() + '초)';
     $('rt-gram').addEventListener('change', () => { store('rt.gram', $('rt-gram').checked ? '1' : '0'); if (!$('rt-gram').checked) { RT.gQueue = []; } });

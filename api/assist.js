@@ -62,11 +62,11 @@ async function ask(prompt, maxTokens) {
       headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) });
     const data = await r.json().catch(() => null);
-    if (!r.ok) { console.error('assist error', r.status, data?.error?.type, data?.error?.message); return null; }
+    if (!r.ok) { console.error('assist error', r.status, data?.error?.type, data?.error?.message); return { __err: r.status + (data?.error?.type ? ' ' + data.error.type : '') }; }
     const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
     const a = text.indexOf('{'), z = text.lastIndexOf('}');
     return JSON.parse(text.slice(a, z + 1));
-  } catch (e) { console.error('assist failure', e && e.name); return null; } finally { clearTimeout(timer); }
+  } catch (e) { console.error('assist failure', e && e.name); return { __err: e && e.name === 'AbortError' ? 'timeout' : 'parse' }; } finally { clearTimeout(timer); }
 }
 const clip = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n);
 
@@ -74,7 +74,8 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'GET') {
     const { config } = await getInfo();
-    return res.status(200).json({ ready: Boolean(process.env.ANTHROPIC_API_KEY) && config.assistOn !== 0, n: { B: config.assistB, I: config.assistI, A: config.assistA }, step: config.assistStep, daily: DAILY });
+    const why = !process.env.ANTHROPIC_API_KEY ? 'key' : config.assistOn === 0 ? 'off' : '';
+    return res.status(200).json({ ready: !why, why, n: { B: config.assistB, I: config.assistI, A: config.assistA }, step: config.assistStep, daily: DAILY });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
   const b = body(req), ip = ipOf(req);
@@ -109,7 +110,7 @@ module.exports = async (req, res) => {
   if (used(device) >= DAILY) return res.status(429).json({ error: 'daily_limit' });
   if (tooMany('as:' + ip, 300)) return res.status(429).json({ error: 'too_many' });
   const out = await ask(prompt, max);
-  if (!out || typeof out !== 'object') return res.status(502).json({ error: 'upstream' });
+  if (!out || typeof out !== 'object' || out.__err) return res.status(502).json({ error: 'upstream', code: out && out.__err ? String(out.__err) : 'empty' });
 
   let result;
   if (b.op === 'suggest') {
