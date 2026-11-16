@@ -6,7 +6,7 @@
 
 | 주소 | 화면 | 파일 |
 |---|---|---|
-| `/` | 허브: 연습 고르기, 얻을 수 있는 것, 저장 안내 | `index.html` |
+| `/` | English Clinic 메인: 학년·고민별 연습 추천, Reading/Writing 기능 안내, 추천 학습 순서, 저장 안내 | `index.html` |
 | `/reading` | 수식어 찾기 | `drill.html`, `drill-data.js` |
 | `/reading/core` | 문장성분 찾기 | `core.html`, `core-data.js` |
 | `/me` | 내 기록: 패턴·형식별 정답률, 학습 코드 | `me.html` |
