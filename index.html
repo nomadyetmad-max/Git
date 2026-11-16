@@ -86,7 +86,6 @@ dialog.dg::backdrop { background: rgba(18, 32, 31, .45) }
 .dg-in { display: flex; flex-direction: column; gap: 16px; padding: 22px }
 .dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px }
 .dg-top .eyebrow { margin: 0 }
-.dg-x { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; padding: 4px 6px }
 .dg-bar { height: 6px; background: var(--band); border-radius: 99px; overflow: hidden }
 .dg-bar i { display: block; height: 100%; width: 0; background: var(--navy); transition: width .25s }
 .dg h2 { font-family: var(--soft); font-size: 22px; color: var(--navy) }
@@ -236,7 +235,7 @@ dialog.dg::backdrop { background: rgba(18, 32, 31, .45) }
 
   <dialog class="dg" id="dg" aria-labelledby="dg-h">
     <div class="dg-in">
-      <div class="dg-top"><span class="eyebrow" id="dg-step">1분 진단</span><button type="button" class="dg-x" id="dg-x">나중에 할게요 ✕</button></div>
+      <div class="dg-top"><span class="eyebrow" id="dg-step">1분 진단</span></div>
       <div class="dg-bar" aria-hidden="true"><i id="dg-bar"></i></div>
       <div id="dg-body"></div>
     </div>
@@ -329,9 +328,7 @@ const D = { step: 0, g: null, chk: new Set(), ans: [], pick: [] };
 const dg = $('dg');
 function dgSet(label, frac, html) { $('dg-step').textContent = label; $('dg-bar').style.width = Math.round(frac * 100) + '%'; $('dg-body').innerHTML = html; }
 function dgOpen() { D.step = 0; D.chk = new Set(); D.ans = []; D.pick = []; if (D.g === null && st.g !== null) D.g = st.g; dgRender(); if (dg.showModal) dg.showModal(); else dg.setAttribute('open', ''); }
-function dgClose() { L.store('hub.diag.seen', '1'); if (dg.open) dg.close(); }
-$('dg-x').onclick = dgClose;
-dg.addEventListener('cancel', () => L.store('hub.diag.seen', '1'));
+dg.addEventListener('cancel', (e) => e.preventDefault());  // Esc로 닫지 않음: 진단을 끝까지
 $('diag-open').onclick = dgOpen;
 
 function dgRender() {
@@ -407,7 +404,7 @@ const EXPLAIN = {
     link: '문장성분 찾기를 {up} 난이도로 풀면, 더 긴 문장에서도 뼈대가 보이는지 확인할 수 있어요.' },
 };
 function dgResult() {
-  const R = diagnose(); L.store('hub.diag', JSON.stringify(R)); L.store('hub.diag.seen', '1');
+  const R = diagnose(); L.store('hub.diag', JSON.stringify(R));
   const first = R.order[0], up = Math.min(3, R.g + 1);
   const E = EXPLAIN[first || 'none'], main = first ? RX[first] : RX.core;
   const flow = E.flow.map((x, i) => `<span class="fl${i === 1 ? ' mid' : ''}">${x}</span>`).join('<span class="ar" aria-hidden="true">→</span>');
@@ -438,7 +435,7 @@ function applyDiag(R) {
 (function initDiag() {
   let R = null; try { R = JSON.parse(L.store('hub.diag') || 'null'); } catch (e) {}
   if (R && typeof R.g === 'number' && Array.isArray(R.order)) applyDiag(R);
-  else if (!L.store('hub.diag.seen')) setTimeout(dgOpen, 400);  // 처음 온 사용자에게만 자동으로
+  else setTimeout(dgOpen, 400);  // 진단을 마치지 않은 사용자에게 자동으로
 })();
 
 function render(cfg, plays) {
