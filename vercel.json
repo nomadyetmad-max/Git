@@ -2,7 +2,7 @@
   "cleanUrls": true,
   "functions": {
     "api/evaluate.js": {
-      "maxDuration": 60
+      "maxDuration": 120
     },
     "api/drill.js": {
       "maxDuration": 20
